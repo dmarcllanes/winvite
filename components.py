@@ -2310,6 +2310,113 @@ def OpenedAt(ts) -> FT:
     )
 
 
+def SharePanel(guest: dict) -> FT:
+    """Full-width share row inserted below the guest row via HTMX."""
+    slug      = guest["slug"]
+    first     = guest["name"].split()[0]
+    url       = f"{BASE_URL}/invite/{slug}"
+    custom    = guest.get("custom_message") or ""
+    wa_text   = f"Hi {first}! 💌 {custom}\n\nYour personal wedding invitation: {url}" if custom else \
+                f"Hi {first}! 🎊 Your personalized wedding invitation is ready. Tap to open: {url}"
+
+    enc_url  = urllib.parse.quote(url, safe="")
+    enc_wa   = urllib.parse.quote(wa_text, safe="")
+    enc_mail = urllib.parse.quote(f"Hi {first},\n\nYour personalized wedding invitation is ready:\n{url}\n\nSee you there! 🎊", safe="")
+
+    platforms = [
+        # (label, icon_svg_path_or_text, href, bg, text_color)
+        ("Copy Link",  "copy",           "javascript:void(0)",
+         "bg-stone-100 hover:bg-stone-200", "text-stone-700",
+         f"onclick=\"navigator.clipboard.writeText('{url}');this.textContent='✓ Copied!';setTimeout(()=>this.textContent='Copy Link',2000)\""),
+        ("WhatsApp",   "message-circle",
+         f"https://api.whatsapp.com/send?text={enc_wa}",
+         "bg-green-100 hover:bg-green-200", "text-green-700", ""),
+        ("Facebook",   "facebook",
+         f"https://www.facebook.com/sharer/sharer.php?u={enc_url}",
+         "bg-blue-100 hover:bg-blue-200", "text-blue-700", ""),
+        ("Messenger",  "message-square",
+         f"fb-messenger://share/?link={enc_url}",
+         "bg-indigo-100 hover:bg-indigo-200", "text-indigo-700", ""),
+        ("Telegram",   "send",
+         f"https://t.me/share/url?url={enc_url}&text={urllib.parse.quote(f'Hi {first}! Your wedding invitation is ready 🎊', safe='')}",
+         "bg-sky-100 hover:bg-sky-200", "text-sky-700", ""),
+        ("Viber",      "phone",
+         f"viber://forward?text={enc_wa}",
+         "bg-purple-100 hover:bg-purple-200", "text-purple-700", ""),
+        ("SMS",        "smartphone",
+         f"sms:?body={enc_wa}",
+         "bg-orange-100 hover:bg-orange-200", "text-orange-700", ""),
+        ("Email",      "mail",
+         f"mailto:?subject={urllib.parse.quote(f'Your Wedding Invitation from Nikolai & Valentina', safe='')}&body={enc_mail}",
+         "bg-rose-100 hover:bg-rose-200", "text-rose-700", ""),
+    ]
+
+    btns = []
+    for label, icon, href, bg, tc, extra_attrs in platforms:
+        extra = {}
+        if extra_attrs:
+            # parse onclick= string into dict key
+            extra["onclick"] = extra_attrs.split('onclick="')[1].rstrip('"')
+        target = "" if href.startswith(("javascript", "sms:", "viber:", "mailto:", "fb-messenger:")) else "_blank"
+        btns.append(
+            A(
+                I(data_lucide=icon, cls="w-4 h-4 mb-1"),
+                Span(label, cls="text-[10px] font-medium leading-none"),
+                href=href,
+                target=target,
+                cls=(
+                    f"flex flex-col items-center justify-center gap-0.5 px-3 py-2.5 "
+                    f"rounded-xl {bg} {tc} transition-colors cursor-pointer min-w-[64px]"
+                ),
+                **extra,
+            )
+        )
+
+    return Tr(
+        Td(
+            Div(
+                # URL display
+                Div(
+                    Span(guest["name"], cls="text-xs font-semibold text-stone-500 uppercase tracking-wider mr-2"),
+                    Span("Personalized invite link:", cls="text-xs text-stone-400"),
+                    cls="flex items-center mb-2",
+                ),
+                Div(
+                    Input(
+                        type="text", value=url, readonly=True,
+                        cls=(
+                            "flex-1 px-3 py-2 text-sm rounded-lg border border-stone-200 "
+                            "bg-stone-50 text-stone-600 font-mono select-all cursor-text"
+                        ),
+                        onclick="this.select()",
+                    ),
+                    cls="flex gap-2 mb-4",
+                ),
+                # Platform buttons
+                Div(*btns, cls="flex flex-wrap gap-2"),
+                # Close
+                Div(
+                    Button(
+                        I(data_lucide="x", cls="w-3.5 h-3.5 mr-1"), "Close",
+                        cls=(
+                            "inline-flex items-center text-xs text-stone-400 "
+                            "hover:text-stone-600 transition-colors mt-3"
+                        ),
+                        hx_get=f"/admin/guests/{slug}/row",
+                        hx_target="closest tr",
+                        hx_swap="outerHTML",
+                    ),
+                    cls="flex justify-end",
+                ),
+                cls="p-4",
+            ),
+            colspan="6",
+            cls="bg-stone-50 border-b border-stone-200 px-4",
+        ),
+        id=f"guest-row-{slug}",
+    )
+
+
 def _icon_btn(icon: str, title: str, cls_extra: str, **attrs) -> FT:
     return Button(
         I(data_lucide=icon, cls="w-3.5 h-3.5"),
@@ -2324,8 +2431,6 @@ def _icon_btn(icon: str, title: str, cls_extra: str, **attrs) -> FT:
 
 def AdminRow(guest: dict) -> FT:
     slug = guest["slug"]
-    invite_url = f"{BASE_URL}/invite/{slug}"
-    copy_js = f"navigator.clipboard.writeText('{invite_url}');this.title='Copied!';setTimeout(()=>this.title='Copy link',1500)"
 
     actions = Div(
         # Preview — opens invite in new tab
@@ -2339,15 +2444,14 @@ def AdminRow(guest: dict) -> FT:
                 "bg-stone-50 text-stone-500 hover:bg-stone-100 transition-colors"
             ),
         ),
-        # Copy invite URL
+        # Share — expands platform panel below row
         _icon_btn(
-            "copy", "Copy link",
-            "bg-stone-50 text-stone-500 hover:bg-stone-100",
-            onclick=copy_js,
-            type="button",
+            "share-2", "Share invite link",
+            "bg-[#D4AF37]/10 text-[#B8960C] hover:bg-[#D4AF37]/20",
+            hx_get=f"/admin/guests/{slug}/share",
+            hx_target="closest tr",
+            hx_swap="outerHTML",
         ),
-        # WhatsApp send
-        WhatsAppButton(guest),
         # Edit — swap row with edit form
         _icon_btn(
             "pencil", "Edit guest",

@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 from db import (init_db, get_guest, mark_opened, update_rsvp, get_all_guests,
                 add_guest, delete_guest, update_guest,
                 save_reservation, save_song_request, get_reservations, get_song_requests)
-from components import InvitePage, AdminPage, RSVPSuccess, NewGuestRow, PreviewInvitePage, AdminRow, EditGuestRow
+from components import InvitePage, AdminPage, RSVPSuccess, NewGuestRow, PreviewInvitePage, AdminRow, EditGuestRow, SharePanel
 
 load_dotenv()
 
@@ -241,6 +241,14 @@ def post(slug: str, name: str, phone: str, category: str = "General", custom_mes
     if not guest:
         return Response(status_code=404)
     return AdminRow(guest), Script("lucide.createIcons();")
+
+
+@rt("/admin/guests/{slug}/share")
+def get(slug: str):
+    guest = get_guest(slug)
+    if not guest:
+        return Response(status_code=404)
+    return SharePanel(guest)
 
 
 @rt("/admin/guests/{slug}")
