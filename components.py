@@ -1041,6 +1041,250 @@ def RSVPForm(guest: dict) -> FT:
     )
 
 
+def AttendanceSection(guest: dict) -> FT:
+    slug = guest["slug"]
+    hearts = [_rsvp_heart(i) for i in range(6)]
+    corner_flowers = [
+        _deco_flower('🌸', 2,  2,  2.5, 0.10, 8,  0.0, -8, 8, -16),
+        _deco_flower('✿',  2,  86, 2.0, 0.09, 10, 1.4, -6, 6, -14),
+        _deco_flower('🌸', 80, 4,  2.5, 0.09, 9,  0.7, -9, 9, -18),
+        _deco_flower('✿',  80, 88, 2.0, 0.10, 7,  2.0, -7, 7, -14),
+    ]
+
+    css = Style("""
+#att-backdrop {
+  position:fixed;inset:0;z-index:9000;
+  background:rgba(20,10,30,0.55);backdrop-filter:blur(10px);
+  display:flex;align-items:flex-end;justify-content:center;
+  opacity:0;pointer-events:none;transition:opacity 0.3s ease;
+}
+#att-backdrop.att-open { opacity:1;pointer-events:all; }
+#att-sheet {
+  width:100%;max-width:520px;
+  background:linear-gradient(160deg,#FEFAF8,#F6F0FD);
+  border-radius:1.75rem 1.75rem 0 0;
+  box-shadow:0 -20px 60px rgba(120,80,120,0.18);
+  transform:translateY(100%);
+  transition:transform 0.38s cubic-bezier(.34,1.56,.64,1);
+  max-height:92vh;overflow-y:auto;overscroll-behavior:contain;
+}
+#att-backdrop.att-open #att-sheet { transform:translateY(0); }
+@media(min-width:600px){
+  #att-backdrop{align-items:center;}
+  #att-sheet{border-radius:1.75rem;max-height:88vh;transform:scale(0.9) translateY(20px);}
+  #att-backdrop.att-open #att-sheet{transform:scale(1) translateY(0);}
+}
+.att-handle{width:40px;height:4px;background:#DDD;border-radius:2px;margin:.8rem auto 0;display:block;}
+.att-dots{display:flex;gap:.45rem;justify-content:center;margin:.75rem 0 .25rem;}
+.att-dot{width:8px;height:8px;border-radius:50%;background:#DDD;transition:background .3s,transform .3s;}
+.att-dot.active{background:#C4687A;transform:scale(1.35);}
+.att-dot.done{background:#C4687A;opacity:.45;}
+.att-step{display:none;animation:attIn .3s ease;padding:0 1.5rem .5rem;}
+.att-step.active{display:block;}
+@keyframes attIn{from{opacity:0;transform:translateX(28px)}to{opacity:1;transform:translateX(0)}}
+.att-field{margin-bottom:1rem;}
+.att-field label{display:block;font-family:sans-serif;font-size:.65rem;text-transform:uppercase;
+  letter-spacing:.22em;color:#B09090;margin-bottom:.35rem;}
+.att-field input,.att-field textarea,.att-field select{
+  width:100%;padding:.7rem 1rem;border-radius:.75rem;border:1.5px solid #E8D8EC;
+  background:rgba(255,255,255,.72);font-family:sans-serif;font-size:.88rem;color:#5C4A4A;
+  outline:none;transition:border-color .2s,box-shadow .2s;-webkit-appearance:none;}
+.att-field input:focus,.att-field textarea:focus,.att-field select:focus{
+  border-color:#C4687A;box-shadow:0 0 0 3px rgba(196,104,122,.12);}
+.att-field textarea{resize:none;}
+.att-actions{display:flex;gap:.75rem;padding:.5rem 1.5rem 1.5rem;}
+.att-btn-next,.att-btn-submit{
+  flex:1;padding:.85rem;border-radius:.85rem;border:none;cursor:pointer;
+  background:linear-gradient(135deg,#C4687A,#D47896);color:white;
+  font-family:sans-serif;font-size:.82rem;text-transform:uppercase;letter-spacing:.2em;
+  box-shadow:0 4px 16px rgba(196,104,122,.25);transition:transform .15s;touch-action:manipulation;}
+.att-btn-next:active,.att-btn-submit:active{transform:scale(.97);}
+.att-btn-back{
+  padding:.85rem 1.1rem;border-radius:.85rem;border:1.5px solid #E8D8EC;
+  background:white;color:#A89090;font-family:sans-serif;font-size:.82rem;
+  cursor:pointer;touch-action:manipulation;}
+""")
+
+    js = Script("""
+(function(){
+  var bd = document.getElementById('att-backdrop');
+  if(!bd) return;
+  var STEPS = bd.querySelectorAll('.att-step');
+  var DOTS  = bd.querySelectorAll('.att-dot');
+  var btnNext   = bd.querySelector('.att-btn-next');
+  var btnSubmit = bd.querySelector('.att-btn-submit');
+  var btnBack   = bd.querySelector('.att-btn-back');
+  var cur = 0;
+
+  function open(){
+    bd.classList.add('att-open');
+    document.body.style.overflow='hidden';
+    go(0);
+  }
+  function close(){
+    bd.classList.remove('att-open');
+    document.body.style.overflow='';
+  }
+  function go(n){
+    cur = n;
+    STEPS.forEach(function(s,i){
+      s.classList.toggle('active', i===n);
+    });
+    DOTS.forEach(function(d,i){
+      d.classList.remove('active','done');
+      if(i<n) d.classList.add('done');
+      else if(i===n) d.classList.add('active');
+    });
+    var isLast = (n === STEPS.length-1);
+    btnNext.style.display   = isLast ? 'none' : '';
+    btnSubmit.style.display = isLast ? '' : 'none';
+    btnBack.style.display   = (n===0) ? 'none' : '';
+  }
+
+  btnNext.addEventListener('click', function(){ if(cur < STEPS.length-1) go(cur+1); });
+  btnBack.addEventListener('click', function(){ if(cur > 0) go(cur-1); });
+  bd.addEventListener('click', function(e){ if(e.target===bd) close(); });
+  document.getElementById('att-close').addEventListener('click', close);
+  window._attOpen = open;
+})();
+""")
+
+    def _field(label, name, placeholder="", tag="input", input_type="text"):
+        if tag == "textarea":
+            el = Textarea(placeholder=placeholder, name=name, rows="3")
+        elif tag == "select":
+            el = NotStr(
+                f'<select name="{name}">'
+                '<option value="">Select…</option>'
+                '<option value="1">Just me</option>'
+                '<option value="2">2 guests</option>'
+                '<option value="3">3 guests</option>'
+                '<option value="4">4 guests</option>'
+                '<option value="5+">5 or more</option>'
+                '</select>'
+            )
+        else:
+            el = Input(type=input_type, placeholder=placeholder, name=name)
+        return Div(NotStr(f'<label>{label}</label>'), el, cls="att-field")
+
+    total_steps = 4
+    dots = Div(*[Div(cls="att-dot" + (" active" if i == 0 else "")) for i in range(total_steps)], cls="att-dots")
+
+    form = Form(
+        Input(type="hidden", name="slug", value=slug),
+        # Step 1 — Attendance
+        Div(
+            P(guest["name"], cls="font-serif italic text-[#C07840] text-xl text-center mb-6"),
+            Div(
+                Label(
+                    Input(type="radio", name="attending", value="attending", cls="sr-only peer", required=True),
+                    Div(
+                        Span("♡", cls="text-3xl block mb-2 text-[#F7C8A0]"),
+                        Span("Joyfully Accepts", cls="font-sans text-xs uppercase tracking-widest"),
+                        cls="flex flex-col items-center justify-center px-6 py-5 rounded-2xl border-2 border-[#F4D0B0] cursor-pointer text-[#A88060] transition-all peer-checked:border-[#C07840] peer-checked:bg-[#FEF6EF] peer-checked:text-[#C07840] hover:border-[#F7C8A0]",
+                    ),
+                    cls="cursor-pointer w-full",
+                ),
+                Label(
+                    Input(type="radio", name="attending", value="declined", cls="sr-only peer"),
+                    Div(
+                        Span("✗", cls="text-3xl block mb-2 text-[#D4C8EC]"),
+                        Span("Regretfully Declines", cls="font-sans text-xs uppercase tracking-widest"),
+                        cls="flex flex-col items-center justify-center px-6 py-5 rounded-2xl border-2 border-[#D4C8EC] cursor-pointer text-[#8070A8] transition-all peer-checked:border-[#9070C0] peer-checked:bg-[#F6F0FD] peer-checked:text-[#7050A8] hover:border-[#CDB8EC]",
+                    ),
+                    cls="cursor-pointer w-full",
+                ),
+                cls="grid grid-cols-2 gap-3 mb-5",
+            ),
+            Label(
+                Input(type="checkbox", name="plus_one", value="on", cls="w-4 h-4 accent-[#C07840] mr-3"),
+                "I'll be bringing a guest (+1)",
+                cls="flex items-center justify-center text-xs text-[#A88060] uppercase tracking-widest cursor-pointer",
+            ),
+            cls="att-step active", data_step="0",
+        ),
+        # Step 2 — Guest count
+        Div(
+            P("How many seats should we reserve?", cls="font-serif text-lg text-[#5C4A4A] text-center mb-5"),
+            _field("Number of guests", "guest_count", tag="select"),
+            cls="att-step", data_step="1",
+        ),
+        # Step 3 — Dietary & notes
+        Div(
+            P("Any special needs?", cls="font-serif text-lg text-[#5C4A4A] text-center mb-5"),
+            _field("Dietary restrictions", "dietary", "Vegetarian, gluten-free, allergies…", tag="textarea"),
+            _field("Extra notes", "notes", "Anything else we should know? 🌸", tag="textarea"),
+            cls="att-step", data_step="2",
+        ),
+        # Step 4 — Song request
+        Div(
+            P("Request a song 🎵", cls="font-serif text-lg text-[#5C4A4A] text-center mb-1"),
+            P("Optional — leave blank to skip", cls="font-sans text-xs text-[#B09090] text-center mb-5"),
+            _field("Song title", "song_title", "e.g. Perfect"),
+            _field("Artist / band", "song_artist", "e.g. Ed Sheeran"),
+            _field("Dedication", "song_message", "A message for the couple? 🌹", tag="textarea"),
+            cls="att-step", data_step="3",
+        ),
+        hx_post="/attend",
+        hx_target="#attendance-section",
+        hx_swap="outerHTML",
+    )
+
+    modal = Div(
+        Div(
+            Div(cls="att-handle"),
+            Button("✕", id="att-close",
+                   style="position:absolute;top:1rem;right:1rem;width:34px;height:34px;"
+                         "border-radius:50%;border:none;background:rgba(0,0,0,.07);"
+                         "color:#999;font-size:1rem;cursor:pointer;"),
+            Div(
+                Div("💌", style="font-size:2rem;filter:drop-shadow(0 0 8px #C4687A44);margin-bottom:.4rem;text-align:center;"),
+                P("Confirm My Attendance", style="font-family:serif;font-size:1.3rem;color:#5C4A4A;text-align:center;margin:.3rem 0 .1rem;"),
+                P("RSVP · Reservation · Song Request", style="font-family:sans-serif;font-size:.65rem;text-transform:uppercase;letter-spacing:.25em;color:#B09090;text-align:center;"),
+                dots,
+                style="padding:1.25rem 1.5rem .5rem;",
+            ),
+            form,
+            Div(
+                Button("← Back", cls="att-btn-back", type="button", style="display:none;"),
+                Button("Next →", cls="att-btn-next", type="button"),
+                Button("Confirm My Attendance ✓", cls="att-btn-submit", type="submit", style="display:none;"),
+                cls="att-actions",
+            ),
+            id="att-sheet", style="position:relative;",
+        ),
+        id="att-backdrop",
+    )
+
+    return Div(
+        Section(
+            css,
+            _section_petals(7, ['#F7C8A0','#F0A878','#F4D8BC','#F2C4CE','#CDB8EC']),
+            Div(*hearts, style='position:absolute;inset:0;pointer-events:none;overflow:hidden;'),
+            Div(*corner_flowers, style='position:absolute;inset:0;pointer-events:none;overflow:hidden;'),
+            modal,
+            Div(
+                Div(_ornament(), cls='scroll-reveal'),
+                Div(cls="h-10"),
+                H2("Will you join us?", cls="font-serif text-4xl md:text-5xl text-[#6A3A28] mb-4 text-center scroll-reveal sr-d1"),
+                P("Kindly reply by August 10, 2026", cls="font-sans text-[10px] uppercase tracking-[0.35em] text-[#A88060] text-center mb-8 scroll-reveal sr-d2"),
+                P(guest["name"], cls="font-serif italic text-[#C07840] text-xl text-center mb-10 scroll-reveal sr-d2"),
+                Button(
+                    "Confirm My Attendance",
+                    onclick="window._attOpen()",
+                    type="button",
+                    cls="w-full max-w-sm mx-auto block py-4 rounded-2xl font-sans font-semibold text-sm uppercase tracking-[.25em] text-white bg-[#C07840] hover:bg-[#A86030] shadow-md shadow-[#F7C8A0]/50 transition-all duration-200 active:scale-[.98] scroll-reveal sr-d4",
+                ),
+                Div(cls="h-16"),
+                cls="max-w-lg mx-auto px-8 py-20 text-center section-inner",
+            ),
+            cls="bg-transparent relative section-canvas",
+        ),
+        js,
+        id="attendance-section",
+    )
+
+
 def RSVPSuccess(attending: str) -> FT:
     if attending == "attending":
         symbol, title, msg, symbol_cls = (
@@ -1064,7 +1308,7 @@ def RSVPSuccess(attending: str) -> FT:
             ),
             cls="bg-transparent relative",
         ),
-        id="rsvp-section",
+        id="attendance-section",
     )
 
 
@@ -2236,9 +2480,7 @@ def InvitePage(guest: dict) -> FT:
             _section_separator(),
             Div(PersonalMessage(guest), cls="invite-section"),
             _section_separator(),
-            Div(RSVPForm(guest), cls="invite-section"),
-            _section_separator(),
-            Div(ReservationSongSection(guest), cls="invite-section"),
+            Div(AttendanceSection(guest), cls="invite-section"),
             Div(InviteFooter(), cls="invite-section"),
         ),
         _lightbox(),

@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 from db import (init_db, get_guest, mark_opened, update_rsvp, get_all_guests,
                 add_guest, delete_guest, update_guest,
                 save_reservation, save_song_request, get_reservations, get_song_requests)
-from components import InvitePage, AdminPage, RSVPSuccess, NewGuestRow, PreviewInvitePage, AdminRow, EditGuestRow, SharePanel
+from components import InvitePage, AdminPage, RSVPSuccess, NewGuestRow, PreviewInvitePage, AdminRow, EditGuestRow, SharePanel, AttendanceSection
 
 load_dotenv()
 
@@ -155,10 +155,31 @@ def get(slug: str):
 @rt("/rsvp")
 def post(slug: str, attending: str, plus_one: str = "off"):
     is_plus_one = plus_one == "on"
-    # Sanitize: only allow valid statuses
     if attending not in ("attending", "declined"):
         attending = "declined"
     update_rsvp(slug, attending, is_plus_one)
+    return RSVPSuccess(attending)
+
+
+@rt("/attend")
+def post(
+    slug: str,
+    attending: str = "declined",
+    plus_one: str = "off",
+    guest_count: str = "",
+    dietary: str = "",
+    notes: str = "",
+    song_title: str = "",
+    song_artist: str = "",
+    song_message: str = "",
+):
+    if attending not in ("attending", "declined"):
+        attending = "declined"
+    update_rsvp(slug, attending, plus_one == "on")
+    if attending == "attending" and guest_count:
+        save_reservation(slug, guest_count, dietary, notes)
+    if song_title and song_artist:
+        save_song_request(slug, song_title, song_artist, song_message)
     return RSVPSuccess(attending)
 
 
