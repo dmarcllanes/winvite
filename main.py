@@ -242,4 +242,4 @@ def post(name: str, phone: str, category: str = "General"):
 # ---------------------------------------------------------------------------
 
 init_db()
-serve()
+serve(host="0.0.0.0", port=5001)
