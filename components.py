@@ -3048,9 +3048,9 @@ def AdminPage(guests: list[dict], reservations: list[dict] = None, songs: list[d
                 cls="mt-10 mb-16",
             ),
             cls="max-w-5xl mx-auto px-4 py-10",
+            style="background:#FDF8F5;min-height:100vh;",
         ),
         Script("lucide.createIcons();"),
-        style="background:#FDF8F5;min-height:100vh;",
     )
 
 
