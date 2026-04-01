@@ -117,6 +117,24 @@ def add_guest(name: str, phone: str, category: str) -> dict:
             return cur.fetchone()
 
 
+def delete_guest(slug: str) -> None:
+    with _get_pool().connection() as conn:
+        conn.execute("DELETE FROM guests WHERE slug = %s", (slug,))
+        conn.commit()
+
+
+def update_guest(slug: str, name: str, phone: str, category: str) -> dict | None:
+    with _get_pool().connection() as conn:
+        with conn.cursor(row_factory=dict_row) as cur:
+            cur.execute(
+                """UPDATE guests SET name=%s, phone=%s, category=%s
+                   WHERE slug=%s RETURNING *""",
+                (name.strip(), phone.strip(), category, slug),
+            )
+            conn.commit()
+            return cur.fetchone()
+
+
 def bulk_add_guests(csv_path: str) -> int:
     """Load guests from a CSV file using Polars and bulk-insert."""
     df = pl.read_csv(csv_path)

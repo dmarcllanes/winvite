@@ -2306,7 +2306,64 @@ def OpenedAt(ts) -> FT:
     )
 
 
+def _icon_btn(icon: str, title: str, cls_extra: str, **attrs) -> FT:
+    return Button(
+        I(data_lucide=icon, cls="w-3.5 h-3.5"),
+        title=title,
+        cls=(
+            "inline-flex items-center justify-center w-7 h-7 rounded-lg "
+            f"transition-colors {cls_extra}"
+        ),
+        **attrs,
+    )
+
+
 def AdminRow(guest: dict) -> FT:
+    slug = guest["slug"]
+    invite_url = f"{BASE_URL}/invite/{slug}"
+    copy_js = f"navigator.clipboard.writeText('{invite_url}');this.title='Copied!';setTimeout(()=>this.title='Copy link',1500)"
+
+    actions = Div(
+        # Preview — opens invite in new tab
+        A(
+            I(data_lucide="eye", cls="w-3.5 h-3.5"),
+            href=f"/invite/{slug}",
+            target="_blank",
+            title="Preview invite",
+            cls=(
+                "inline-flex items-center justify-center w-7 h-7 rounded-lg "
+                "bg-stone-50 text-stone-500 hover:bg-stone-100 transition-colors"
+            ),
+        ),
+        # Copy invite URL
+        _icon_btn(
+            "copy", "Copy link",
+            "bg-stone-50 text-stone-500 hover:bg-stone-100",
+            onclick=copy_js,
+            type="button",
+        ),
+        # WhatsApp send
+        WhatsAppButton(guest),
+        # Edit — swap row with edit form
+        _icon_btn(
+            "pencil", "Edit guest",
+            "bg-blue-50 text-blue-500 hover:bg-blue-100",
+            hx_get=f"/admin/guests/{slug}/edit-form",
+            hx_target="closest tr",
+            hx_swap="outerHTML",
+        ),
+        # Delete
+        _icon_btn(
+            "trash-2", "Delete guest",
+            "bg-red-50 text-red-400 hover:bg-red-100",
+            hx_delete=f"/admin/guests/{slug}",
+            hx_target="closest tr",
+            hx_swap="outerHTML swap:300ms",
+            hx_confirm=f"Remove {guest['name']} from the guest list?",
+        ),
+        cls="flex items-center gap-1.5",
+    )
+
     return Tr(
         Td(
             P(guest["name"], cls="font-medium text-stone-800 text-sm"),
@@ -2320,8 +2377,75 @@ def AdminRow(guest: dict) -> FT:
             cls="px-4 py-3 text-sm text-stone-500 text-center",
         ),
         Td(OpenedAt(guest.get("opened_at")), cls="px-4 py-3"),
-        Td(WhatsAppButton(guest), cls="px-4 py-3 text-center"),
+        Td(actions, cls="px-4 py-3"),
+        id=f"guest-row-{slug}",
         cls="border-b border-stone-100 hover:bg-stone-50 transition-colors",
+    )
+
+
+def EditGuestRow(guest: dict) -> FT:
+    slug = guest["slug"]
+    input_cls = (
+        "w-full px-2 py-1 rounded border border-stone-200 text-sm "
+        "focus:outline-none focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37]"
+    )
+    select_cls = input_cls + " bg-white"
+    return Tr(
+        Td(
+            Input(type="text", name="name", value=guest["name"],
+                  required=True, cls=input_cls, form=f"edit-{slug}"),
+            Input(type="tel", name="phone", value=guest.get("phone", ""),
+                  cls=f"{input_cls} mt-1", form=f"edit-{slug}"),
+            cls="px-4 py-3 space-y-1",
+        ),
+        Td(
+            Select(
+                Option("General", value="General", selected=guest["category"] == "General"),
+                Option("Family",  value="Family",  selected=guest["category"] == "Family"),
+                Option("Barkada", value="Barkada", selected=guest["category"] == "Barkada"),
+                Option("VIP",     value="VIP",     selected=guest["category"] == "VIP"),
+                Option("Work",    value="Work",    selected=guest["category"] == "Work"),
+                name="category", cls=select_cls, form=f"edit-{slug}",
+            ),
+            cls="px-4 py-3",
+        ),
+        Td(StatusBadge(guest["rsvp_status"]), cls="px-4 py-3"),
+        Td(
+            "✓" if guest["plus_one"] else "—",
+            cls="px-4 py-3 text-sm text-stone-500 text-center",
+        ),
+        Td(OpenedAt(guest.get("opened_at")), cls="px-4 py-3"),
+        Td(
+            Form(
+                Button(
+                    I(data_lucide="check", cls="w-3.5 h-3.5 mr-1"), "Save",
+                    type="submit",
+                    cls=(
+                        "inline-flex items-center px-3 py-1 rounded-lg text-xs font-semibold "
+                        "bg-[#D4AF37] text-[#0A0A0A] hover:bg-amber-400 transition-colors"
+                    ),
+                ),
+                Button(
+                    "Cancel",
+                    type="button",
+                    cls=(
+                        "inline-flex items-center px-3 py-1 rounded-lg text-xs "
+                        "bg-stone-100 text-stone-600 hover:bg-stone-200 transition-colors"
+                    ),
+                    hx_get=f"/admin/guests/{slug}/row",
+                    hx_target="closest tr",
+                    hx_swap="outerHTML",
+                ),
+                id=f"edit-{slug}",
+                hx_post=f"/admin/guests/{slug}/edit",
+                hx_target="closest tr",
+                hx_swap="outerHTML",
+                cls="flex gap-2 items-center",
+            ),
+            cls="px-4 py-3",
+        ),
+        id=f"guest-row-{slug}",
+        cls="border-b border-amber-100 bg-amber-50/40",
     )
 
 
@@ -2355,7 +2479,7 @@ def GuestTable(guests: list[dict]) -> FT:
                     Tr(
                         *[
                             Th(h, cls="px-4 py-3 text-left text-xs font-semibold text-stone-500 uppercase tracking-wider")
-                            for h in ["Guest", "Category", "RSVP", "+1", "Opened", "Send"]
+                            for h in ["Guest", "Category", "RSVP", "+1", "Opened", "Actions"]
                         ],
                         cls="bg-stone-50 border-b border-stone-200",
                     )

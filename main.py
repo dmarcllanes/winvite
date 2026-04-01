@@ -2,8 +2,8 @@ from fasthtml.common import *
 from starlette.staticfiles import StaticFiles
 from dotenv import load_dotenv
 
-from db import init_db, get_guest, mark_opened, update_rsvp, get_all_guests, add_guest
-from components import InvitePage, AdminPage, RSVPSuccess, NewGuestRow, PreviewInvitePage
+from db import init_db, get_guest, mark_opened, update_rsvp, get_all_guests, add_guest, delete_guest, update_guest
+from components import InvitePage, AdminPage, RSVPSuccess, NewGuestRow, PreviewInvitePage, AdminRow, EditGuestRow
 
 load_dotenv()
 
@@ -235,6 +235,36 @@ def get():
 def post(name: str, phone: str, category: str = "General"):
     guest = add_guest(name, phone, category)
     return NewGuestRow(guest)
+
+
+@rt("/admin/guests/{slug}/row")
+def get(slug: str):
+    guest = get_guest(slug)
+    if not guest:
+        return Response(status_code=404)
+    return AdminRow(guest), Script("lucide.createIcons();")
+
+
+@rt("/admin/guests/{slug}/edit-form")
+def get(slug: str):
+    guest = get_guest(slug)
+    if not guest:
+        return Response(status_code=404)
+    return EditGuestRow(guest)
+
+
+@rt("/admin/guests/{slug}/edit")
+def post(slug: str, name: str, phone: str, category: str = "General"):
+    guest = update_guest(slug, name, phone, category)
+    if not guest:
+        return Response(status_code=404)
+    return AdminRow(guest), Script("lucide.createIcons();")
+
+
+@rt("/admin/guests/{slug}")
+def delete(slug: str):
+    delete_guest(slug)
+    return Response(status_code=200)
 
 
 # ---------------------------------------------------------------------------
