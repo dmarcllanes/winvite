@@ -1,0 +1,24 @@
+{
+  "name": "Nikolai & Valentina — Wedding Invitation",
+  "short_name": "Winvite",
+  "description": "Personalized wedding e-invitation for Nikolai & Valentina",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#FDF8F5",
+  "theme_color": "#E8B4BC",
+  "icons": [
+    {
+      "src": "/static/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/static/icon-maskable.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ]
+}

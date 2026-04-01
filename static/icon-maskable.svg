@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Solid bg fills the full safe zone for maskable -->
+  <rect width="512" height="512" fill="#E8B4BC"/>
+  <text x="256" y="320"
+        font-family="Georgia, 'Times New Roman', serif"
+        font-size="200"
+        font-style="italic"
+        text-anchor="middle"
+        fill="#FDF8F5"
+        letter-spacing="-6">D&amp;W</text>
+</svg>

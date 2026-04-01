@@ -1,0 +1,42 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+
+# Virtual environment
+.venv/
+
+# Environment & secrets
+.env
+.env.*
+*.env
+
+# Version control
+.git/
+.gitignore
+
+# Dev / editor
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# Docker files (no need to copy into image)
+Dockerfile
+.dockerignore
+
+# Docs & project notes
+README.md
+CLAUDE.md
+reference.txt
+
+# uv cache
+.uv/
+
+# Test & coverage
+.pytest_cache/
+htmlcov/
+.coverage
