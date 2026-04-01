@@ -1116,6 +1116,11 @@ def AttendanceSection(guest: dict) -> FT:
   var btnBack   = bd.querySelector('.att-btn-back');
   var cur = 0;
 
+  function isDeclined(){
+    var r = bd.querySelector('[name="attending"]:checked');
+    return r && r.value === 'declined';
+  }
+
   function open(){
     bd.classList.add('att-open');
     document.body.style.overflow='hidden';
@@ -1135,11 +1140,22 @@ def AttendanceSection(guest: dict) -> FT:
       if(i<n) d.classList.add('done');
       else if(i===n) d.classList.add('active');
     });
-    var isLast = (n === STEPS.length-1);
-    btnNext.style.display   = isLast ? 'none' : '';
-    btnSubmit.style.display = isLast ? '' : 'none';
-    btnBack.style.display   = (n===0) ? 'none' : '';
+    // On step 0 with declined: show Submit immediately, hide Next
+    if(n === 0 && isDeclined()){
+      btnNext.style.display   = 'none';
+      btnSubmit.style.display = '';
+    } else {
+      var isLast = (n === STEPS.length-1);
+      btnNext.style.display   = isLast ? 'none' : '';
+      btnSubmit.style.display = isLast ? '' : 'none';
+    }
+    btnBack.style.display = (n===0) ? 'none' : '';
   }
+
+  // Re-evaluate buttons when attending choice changes
+  bd.querySelectorAll('[name="attending"]').forEach(function(r){
+    r.addEventListener('change', function(){ go(cur); });
+  });
 
   btnNext.addEventListener('click', function(){ if(cur < STEPS.length-1) go(cur+1); });
   btnBack.addEventListener('click', function(){ if(cur > 0) go(cur-1); });
