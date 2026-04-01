@@ -2540,15 +2540,15 @@ def WhatsAppButton(guest: dict) -> FT:
 
 def OpenedAt(ts) -> FT:
     if ts is None:
-        return Span("Not opened", cls="text-xs text-stone-300 italic")
+        return Span("Not opened", cls="text-xs text-[#D4B8B0] italic")
     if isinstance(ts, str):
         try:
             ts = datetime.fromisoformat(ts)
         except ValueError:
-            return Span(ts, cls="text-xs text-stone-500")
+            return Span(ts, cls="text-xs text-[#B09090]")
     return Span(
         ts.strftime("%b %d, %Y %H:%M"),
-        cls="text-xs text-stone-500",
+        cls="text-xs text-[#B09090]",
     )
 
 
@@ -2568,7 +2568,7 @@ def SharePanel(guest: dict) -> FT:
     platforms = [
         # (label, icon_svg_path_or_text, href, bg, text_color)
         ("Copy Link",  "copy",           "javascript:void(0)",
-         "bg-stone-100 hover:bg-stone-200", "text-stone-700",
+         "bg-[#F5EEEA] hover:bg-[#EAD8D0]", "text-[#6A5A5A]",
          f"onclick=\"navigator.clipboard.writeText('{url}');this.textContent='✓ Copied!';setTimeout(()=>this.textContent='Copy Link',2000)\""),
         ("WhatsApp",   "message-circle",
          f"https://api.whatsapp.com/send?text={enc_wa}",
@@ -2619,16 +2619,16 @@ def SharePanel(guest: dict) -> FT:
             Div(
                 # URL display
                 Div(
-                    Span(guest["name"], cls="text-xs font-semibold text-stone-500 uppercase tracking-wider mr-2"),
-                    Span("Personalized invite link:", cls="text-xs text-stone-400"),
+                    Span(guest["name"], cls="text-xs font-semibold text-[#B09090] uppercase tracking-wider mr-2"),
+                    Span("Personalized invite link:", cls="text-xs text-[#C0A8A8]"),
                     cls="flex items-center mb-2",
                 ),
                 Div(
                     Input(
                         type="text", value=url, readonly=True,
                         cls=(
-                            "flex-1 px-3 py-2 text-sm rounded-lg border border-stone-200 "
-                            "bg-stone-50 text-stone-600 font-mono select-all cursor-text"
+                            "flex-1 px-3 py-2 text-sm rounded-lg border border-[#E8D8D0] "
+                            "bg-[#FDF8F5] text-[#8C7070] font-mono select-all cursor-text"
                         ),
                         onclick="this.select()",
                     ),
@@ -2641,8 +2641,8 @@ def SharePanel(guest: dict) -> FT:
                     Button(
                         I(data_lucide="x", cls="w-3.5 h-3.5 mr-1"), "Close",
                         cls=(
-                            "inline-flex items-center text-xs text-stone-400 "
-                            "hover:text-stone-600 transition-colors mt-3"
+                            "inline-flex items-center text-xs text-[#C0A8A8] "
+                            "hover:text-[#8C7070] transition-colors mt-3"
                         ),
                         hx_get=f"/admin/guests/{slug}/row",
                         hx_target="closest tr",
@@ -2653,7 +2653,7 @@ def SharePanel(guest: dict) -> FT:
                 cls="p-4",
             ),
             colspan="6",
-            cls="bg-stone-50 border-b border-stone-200 px-4",
+            cls="bg-[#FAF3F0] border-b border-[#E8D8D0] px-4",
         ),
         id=f"guest-row-{slug}",
     )
@@ -2683,7 +2683,7 @@ def AdminRow(guest: dict) -> FT:
             title="Preview invite",
             cls=(
                 "inline-flex items-center justify-center w-7 h-7 rounded-lg "
-                "bg-stone-50 text-stone-500 hover:bg-stone-100 transition-colors"
+                "bg-[#FDF8F5] text-[#B09090] hover:bg-[#F5EEEA] transition-colors"
             ),
         ),
         # Share — expands platform panel below row
@@ -2697,7 +2697,7 @@ def AdminRow(guest: dict) -> FT:
         # Edit — swap row with edit form
         _icon_btn(
             "pencil", "Edit guest",
-            "bg-blue-50 text-blue-500 hover:bg-blue-100",
+            "bg-[#D4AF37]/10 text-[#B8960C] hover:bg-[#D4AF37]/25",
             hx_get=f"/admin/guests/{slug}/edit-form",
             hx_target="closest tr",
             hx_swap="outerHTML",
@@ -2705,7 +2705,7 @@ def AdminRow(guest: dict) -> FT:
         # Delete
         _icon_btn(
             "trash-2", "Delete guest",
-            "bg-red-50 text-red-400 hover:bg-red-100",
+            "bg-[#F2C4CE]/40 text-[#C4687A] hover:bg-[#F2C4CE]/70",
             hx_delete=f"/admin/guests/{slug}",
             hx_target="closest tr",
             hx_swap="outerHTML swap:300ms",
@@ -2717,8 +2717,8 @@ def AdminRow(guest: dict) -> FT:
     has_custom = bool(guest.get("custom_message"))
     return Tr(
         Td(
-            P(guest["name"], cls="font-medium text-stone-800 text-sm"),
-            P(guest.get("phone", "—"), cls="text-xs text-stone-400 mt-0.5"),
+            P(guest["name"], cls="font-medium text-[#5C4A4A] text-sm"),
+            P(guest.get("phone", "—"), cls="text-xs text-[#C0A8A8] mt-0.5"),
             cls="px-4 py-3",
         ),
         Td(
@@ -2729,19 +2729,19 @@ def AdminRow(guest: dict) -> FT:
         Td(StatusBadge(guest["rsvp_status"]), cls="px-4 py-3"),
         Td(
             "✓" if guest["plus_one"] else "—",
-            cls="px-4 py-3 text-sm text-stone-500 text-center",
+            cls="px-4 py-3 text-sm text-[#B09090] text-center",
         ),
         Td(OpenedAt(guest.get("opened_at")), cls="px-4 py-3"),
         Td(actions, cls="px-4 py-3"),
         id=f"guest-row-{slug}",
-        cls="border-b border-stone-100 hover:bg-stone-50 transition-colors",
+        cls="border-b border-[#F0E8E4] hover:bg-[#FEF6F3] transition-colors",
     )
 
 
 def EditGuestRow(guest: dict) -> FT:
     slug = guest["slug"]
     input_cls = (
-        "w-full px-2 py-1 rounded border border-stone-200 text-sm "
+        "w-full px-2 py-1 rounded border border-[#E8D8D0] text-[#5C4A4A] text-sm"
         "focus:outline-none focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37]"
     )
     select_cls = input_cls + " bg-white"
@@ -2770,7 +2770,7 @@ def EditGuestRow(guest: dict) -> FT:
         # Col 3: custom message (spans RSVP + +1 + Opened columns visually via colspan)
         Td(
             P("Personal message for their invite + WhatsApp:",
-              cls="text-xs text-stone-400 mb-1"),
+              cls="text-xs text-[#C0A8A8] mb-1"),
             Textarea(
                 guest.get("custom_message") or "",
                 name="custom_message",
@@ -2798,7 +2798,7 @@ def EditGuestRow(guest: dict) -> FT:
                     type="button",
                     cls=(
                         "inline-flex items-center px-3 py-1 rounded-lg text-xs "
-                        "bg-stone-100 text-stone-600 hover:bg-stone-200 transition-colors"
+                        "bg-[#F5EEEA] text-[#8C7070] hover:bg-[#E8D8D0] transition-colors"
                     ),
                     hx_get=f"/admin/guests/{slug}/row",
                     hx_target="closest tr",
@@ -2823,7 +2823,7 @@ def GuestTable(guests: list[dict]) -> FT:
             Td(
                 "No guests yet. Add your first guest above.",
                 colspan="6",
-                cls="text-center text-stone-400 text-sm py-12",
+                cls="text-center text-[#C0A8A8] text-sm py-12",
             )
         )
     ]
@@ -2846,16 +2846,16 @@ def GuestTable(guests: list[dict]) -> FT:
                 Thead(
                     Tr(
                         *[
-                            Th(h, cls="px-4 py-3 text-left text-xs font-semibold text-stone-500 uppercase tracking-wider")
+                            Th(h, cls="px-4 py-3 text-left text-xs font-semibold text-[#B09090] uppercase tracking-wider")
                             for h in ["Guest", "Category", "RSVP", "+1", "Opened", "Actions"]
                         ],
-                        cls="bg-stone-50 border-b border-stone-200",
+                        cls="bg-[#FAF3F0] border-b border-[#E8D8D0]",
                     )
                 ),
                 Tbody(*rows, id="guest-table"),
                 cls="w-full",
             ),
-            cls="overflow-x-auto rounded-xl border border-stone-200 bg-white shadow-sm",
+            cls="overflow-x-auto rounded-xl border border-[#E8D8D0] bg-white shadow-[0_2px_12px_rgba(92,74,74,0.06)]",
         ),
     )
 
@@ -2866,9 +2866,9 @@ def _stat(icon: str, value: str, label: str) -> FT:
             I(data_lucide=icon, cls="w-5 h-5 text-[#D4AF37]"),
             cls="mb-2",
         ),
-        P(value, cls="font-serif text-3xl text-stone-800"),
-        P(label, cls="text-xs text-stone-400 uppercase tracking-wider mt-0.5"),
-        cls="bg-white rounded-xl border border-stone-200 px-5 py-4 shadow-sm",
+        P(value, cls="font-serif text-3xl text-[#5C4A4A]"),
+        P(label, cls="text-xs text-[#B09090] uppercase tracking-wider mt-0.5"),
+        cls="bg-white rounded-xl border border-[#E8D8D0] px-5 py-4 shadow-[0_2px_12px_rgba(92,74,74,0.06)]",
     )
 
 
@@ -2879,7 +2879,7 @@ def AddGuestForm() -> FT:
                 type="text", name="name", placeholder="Full Name",
                 required=True,
                 cls=(
-                    "w-full px-4 py-2.5 rounded-lg border border-stone-200 text-sm "
+                    "w-full px-4 py-2.5 rounded-lg border border-[#E8D8D0] text-[#5C4A4A] text-sm"
                     "focus:outline-none focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37] "
                     "transition-colors"
                 ),
@@ -2888,7 +2888,7 @@ def AddGuestForm() -> FT:
                 type="tel", name="phone", placeholder="Phone (e.g. 09171234567)",
                 required=True,
                 cls=(
-                    "w-full px-4 py-2.5 rounded-lg border border-stone-200 text-sm "
+                    "w-full px-4 py-2.5 rounded-lg border border-[#E8D8D0] text-[#5C4A4A] text-sm"
                     "focus:outline-none focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37] "
                     "transition-colors"
                 ),
@@ -2901,7 +2901,7 @@ def AddGuestForm() -> FT:
                 Option("Work",    value="Work"),
                 name="category",
                 cls=(
-                    "w-full px-4 py-2.5 rounded-lg border border-stone-200 text-sm "
+                    "w-full px-4 py-2.5 rounded-lg border border-[#E8D8D0] text-[#5C4A4A] text-sm"
                     "focus:outline-none focus:border-[#D4AF37] bg-white "
                     "transition-colors"
                 ),
@@ -2929,33 +2929,33 @@ def ReservationsPanel(reservations: list[dict]) -> FT:
     if not reservations:
         return Div(
             P("No reservation details submitted yet.",
-              cls="text-sm text-stone-400 italic text-center py-8"),
+              cls="text-sm text-[#C0A8A8] italic text-center py-8"),
         )
     rows = []
     for r in reservations:
         rows.append(Tr(
             Td(
-                P(r["name"], cls="font-medium text-stone-800 text-sm"),
-                P(r.get("phone", "—"), cls="text-xs text-stone-400"),
+                P(r["name"], cls="font-medium text-[#5C4A4A] text-sm"),
+                P(r.get("phone", "—"), cls="text-xs text-[#C0A8A8]"),
                 cls="px-4 py-3",
             ),
             Td(CategoryBadge(r["category"]), cls="px-4 py-3"),
-            Td(r.get("guest_count") or "—", cls="px-4 py-3 text-sm text-stone-600 text-center"),
-            Td(r.get("dietary") or "—", cls="px-4 py-3 text-sm text-stone-600"),
-            Td(r.get("special_notes") or "—", cls="px-4 py-3 text-sm text-stone-500 max-w-xs"),
-            cls="border-b border-stone-100 hover:bg-stone-50",
+            Td(r.get("guest_count") or "—", cls="px-4 py-3 text-sm text-[#8C7070] text-center"),
+            Td(r.get("dietary") or "—", cls="px-4 py-3 text-sm text-[#8C7070]"),
+            Td(r.get("special_notes") or "—", cls="px-4 py-3 text-sm text-[#B09090] max-w-xs"),
+            cls="border-b border-[#F0E8E4] hover:bg-[#FEF6F3]",
         ))
     return Div(
         Table(
             Thead(Tr(
-                *[Th(h, cls="px-4 py-3 text-left text-xs font-semibold text-stone-500 uppercase tracking-wider")
+                *[Th(h, cls="px-4 py-3 text-left text-xs font-semibold text-[#B09090] uppercase tracking-wider")
                   for h in ["Guest", "Category", "# Guests", "Dietary", "Notes"]],
-                cls="bg-stone-50 border-b border-stone-200",
+                cls="bg-[#FAF3F0] border-b border-[#E8D8D0]",
             )),
             Tbody(*rows),
             cls="w-full",
         ),
-        cls="overflow-x-auto rounded-xl border border-stone-200 bg-white shadow-sm",
+        cls="overflow-x-auto rounded-xl border border-[#E8D8D0] bg-white shadow-[0_2px_12px_rgba(92,74,74,0.06)]",
     )
 
 
@@ -2963,7 +2963,7 @@ def SongRequestsPanel(songs: list[dict]) -> FT:
     if not songs:
         return Div(
             P("No song requests yet.",
-              cls="text-sm text-stone-400 italic text-center py-8"),
+              cls="text-sm text-[#C0A8A8] italic text-center py-8"),
         )
     rows = []
     for s in songs:
@@ -2974,29 +2974,29 @@ def SongRequestsPanel(songs: list[dict]) -> FT:
                 submitted = ts.strftime("%b %d, %H:%M")
         rows.append(Tr(
             Td(
-                P(s.get("name") or "Unknown", cls="font-medium text-stone-800 text-sm"),
-                P(submitted, cls="text-xs text-stone-400"),
+                P(s.get("name") or "Unknown", cls="font-medium text-[#5C4A4A] text-sm"),
+                P(submitted, cls="text-xs text-[#C0A8A8]"),
                 cls="px-4 py-3",
             ),
             Td(
-                P(s["song"], cls="text-sm font-medium text-stone-700"),
-                P(f"by {s['artist']}", cls="text-xs text-stone-400"),
+                P(s["song"], cls="text-sm font-medium text-[#6A5A5A]"),
+                P(f"by {s['artist']}", cls="text-xs text-[#C0A8A8]"),
                 cls="px-4 py-3",
             ),
-            Td(s.get("dedication") or "—", cls="px-4 py-3 text-sm text-stone-500 max-w-xs"),
-            cls="border-b border-stone-100 hover:bg-stone-50",
+            Td(s.get("dedication") or "—", cls="px-4 py-3 text-sm text-[#B09090] max-w-xs"),
+            cls="border-b border-[#F0E8E4] hover:bg-[#FEF6F3]",
         ))
     return Div(
         Table(
             Thead(Tr(
-                *[Th(h, cls="px-4 py-3 text-left text-xs font-semibold text-stone-500 uppercase tracking-wider")
+                *[Th(h, cls="px-4 py-3 text-left text-xs font-semibold text-[#B09090] uppercase tracking-wider")
                   for h in ["Requested By", "Song", "Dedication"]],
-                cls="bg-stone-50 border-b border-stone-200",
+                cls="bg-[#FAF3F0] border-b border-[#E8D8D0]",
             )),
             Tbody(*rows),
             cls="w-full",
         ),
-        cls="overflow-x-auto rounded-xl border border-stone-200 bg-white shadow-sm",
+        cls="overflow-x-auto rounded-xl border border-[#E8D8D0] bg-white shadow-[0_2px_12px_rgba(92,74,74,0.06)]",
     )
 
 
@@ -3009,9 +3009,9 @@ def AdminPage(guests: list[dict], reservations: list[dict] = None, songs: list[d
             # Header
             Div(
                 Div(
-                    H1("Admin Dashboard", cls="font-serif text-3xl text-stone-800"),
+                    H1("Admin Dashboard", cls="font-serif text-3xl text-[#5C4A4A]"),
                     P("Manage your guest list and send personalized invitations.",
-                      cls="text-sm text-stone-400 mt-1"),
+                      cls="text-sm text-[#B09090] mt-1"),
                     cls="flex-1",
                 ),
                 Div(I(data_lucide="heart", cls="w-8 h-8 text-[#D4AF37]"), cls="flex items-center"),
@@ -3019,9 +3019,9 @@ def AdminPage(guests: list[dict], reservations: list[dict] = None, songs: list[d
             ),
             # Add guest
             Div(
-                H2("Add Guest", cls="text-sm font-semibold text-stone-600 uppercase tracking-wider mb-3"),
+                H2("Add Guest", cls="text-sm font-semibold text-[#B09090] uppercase tracking-wider mb-3"),
                 AddGuestForm(),
-                cls="bg-white border border-stone-200 rounded-xl p-5 mb-8 shadow-sm",
+                cls="bg-white border border-[#E8D8D0] rounded-xl p-5 mb-8 shadow-[0_2px_12px_rgba(92,74,74,0.06)]",
             ),
             # Guest table
             GuestTable(guests),
@@ -3030,7 +3030,7 @@ def AdminPage(guests: list[dict], reservations: list[dict] = None, songs: list[d
                 Div(
                     I(data_lucide="calendar-check", cls="w-5 h-5 text-[#D4AF37] mr-2"),
                     H2(f"Reservation Responses ({len(reservations)})",
-                       cls="text-base font-semibold text-stone-700"),
+                       cls="text-base font-semibold text-[#5C4A4A]"),
                     cls="flex items-center mb-4",
                 ),
                 ReservationsPanel(reservations),
@@ -3041,7 +3041,7 @@ def AdminPage(guests: list[dict], reservations: list[dict] = None, songs: list[d
                 Div(
                     I(data_lucide="music", cls="w-5 h-5 text-[#D4AF37] mr-2"),
                     H2(f"Song Requests ({len(songs)})",
-                       cls="text-base font-semibold text-stone-700"),
+                       cls="text-base font-semibold text-[#5C4A4A]"),
                     cls="flex items-center mb-4",
                 ),
                 SongRequestsPanel(songs),
@@ -3050,6 +3050,7 @@ def AdminPage(guests: list[dict], reservations: list[dict] = None, songs: list[d
             cls="max-w-5xl mx-auto px-4 py-10",
         ),
         Script("lucide.createIcons();"),
+        style="background:#FDF8F5;min-height:100vh;",
     )
 
 
