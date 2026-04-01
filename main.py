@@ -242,4 +242,6 @@ def post(name: str, phone: str, category: str = "General"):
 # ---------------------------------------------------------------------------
 
 init_db()
-serve(host="0.0.0.0", port=5001)
+import os
+port = int(os.environ.get("PORT", 5001))
+serve(host="0.0.0.0", port=port)

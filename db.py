@@ -24,7 +24,8 @@ def _get_pool() -> ConnectionPool:
 def init_db() -> None:
     global _pool
     if not DATABASE_URL:
-        raise ValueError("DATABASE_URL environment variable is not set.")
+        print("WARNING: DATABASE_URL environment variable is not set. Database will not initialize.")
+        return
     _pool = ConnectionPool(DATABASE_URL, min_size=1, max_size=10)
     _create_tables()
 

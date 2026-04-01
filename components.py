@@ -300,7 +300,7 @@ _COUNTDOWN_JS = Script("""
 def MusicPlayer() -> FT:
     return Div(
         Audio(
-            Source(src="/static/music.mp3", type="audio/mpeg"),
+            Source(src="/static/invite.mp3", type="audio/mpeg"),
             id="bg-music",
             loop=True,
             preload="auto",
@@ -349,7 +349,7 @@ def MusicPlayer() -> FT:
     // If the file can't be loaded, disable the button gracefully
     audio.addEventListener('error', function() {
         btn.disabled = true;
-        btn.title = 'No music file — add music.mp3 to the /static/ folder';
+        btn.title = 'No music file — add invite.mp3 to the /static/ folder';
         if (pulse) pulse.classList.add('hidden');
     }, { once: true });
 
