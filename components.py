@@ -964,7 +964,7 @@ def RSVPForm(guest: dict) -> FT:
                     cls="font-serif text-4xl md:text-5xl text-[#6A3A28] mb-4 text-center scroll-reveal sr-d1",
                 ),
                 P(
-                    "Kindly reply by November 30, 2026",
+                    "Kindly reply by August 10, 2026",
                     cls="font-sans text-[10px] uppercase tracking-[0.35em] text-[#A88060] text-center mb-8 scroll-reveal sr-d2",
                 ),
                 P(
@@ -2010,7 +2010,7 @@ def CountdownNavbar() -> FT:
                 Div(style="width:1px;height:2rem;background:rgba(255,200,230,0.25);margin-left:1.1rem;margin-right:1.1rem;"),
                 Div(
                     Div(
-                        "🌸 Dec 20",
+                        "🌸 Aug 24",
                         style=(
                             "font-family:serif;font-size:0.85rem;color:#ffffff;"
                             "font-weight:600;line-height:1;"
