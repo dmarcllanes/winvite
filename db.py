@@ -24,10 +24,15 @@ def _get_pool() -> ConnectionPool:
 def init_db() -> None:
     global _pool
     if not DATABASE_URL:
-        print("WARNING: DATABASE_URL environment variable is not set. Database will not initialize.")
+        print("WARNING: DATABASE_URL not set — database disabled.")
         return
-    _pool = ConnectionPool(DATABASE_URL, min_size=1, max_size=10)
-    _create_tables()
+    try:
+        _pool = ConnectionPool(DATABASE_URL, min_size=1, max_size=10, timeout=10)
+        _create_tables()
+        print("Database initialized successfully.")
+    except Exception as exc:
+        print(f"WARNING: Database connection failed — {exc}. App will start without DB.")
+        _pool = None
 
 
 def _create_tables() -> None:
