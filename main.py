@@ -236,8 +236,8 @@ def get(slug: str):
 
 
 @rt("/admin/guests/{slug}/edit")
-def post(slug: str, name: str, phone: str, category: str = "General"):
-    guest = update_guest(slug, name, phone, category)
+def post(slug: str, name: str, phone: str, category: str = "General", custom_message: str = ""):
+    guest = update_guest(slug, name, phone, category, custom_message)
     if not guest:
         return Response(status_code=404)
     return AdminRow(guest), Script("lucide.createIcons();")

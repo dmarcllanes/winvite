@@ -54,9 +54,10 @@ def _create_tables() -> None:
         """)
         # Add columns to existing tables that predate this schema
         for col, definition in [
-            ("guest_count",   "TEXT"),
-            ("dietary",       "TEXT"),
-            ("special_notes", "TEXT"),
+            ("guest_count",    "TEXT"),
+            ("dietary",        "TEXT"),
+            ("special_notes",  "TEXT"),
+            ("custom_message", "TEXT"),
         ]:
             conn.execute(f"""
                 ALTER TABLE guests ADD COLUMN IF NOT EXISTS {col} {definition}
@@ -145,13 +146,13 @@ def delete_guest(slug: str) -> None:
         conn.commit()
 
 
-def update_guest(slug: str, name: str, phone: str, category: str) -> dict | None:
+def update_guest(slug: str, name: str, phone: str, category: str, custom_message: str = "") -> dict | None:
     with _get_pool().connection() as conn:
         with conn.cursor(row_factory=dict_row) as cur:
             cur.execute(
-                """UPDATE guests SET name=%s, phone=%s, category=%s
+                """UPDATE guests SET name=%s, phone=%s, category=%s, custom_message=%s
                    WHERE slug=%s RETURNING *""",
-                (name.strip(), phone.strip(), category, slug),
+                (name.strip(), phone.strip(), category, custom_message.strip() or None, slug),
             )
             conn.commit()
             return cur.fetchone()

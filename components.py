@@ -917,7 +917,7 @@ def InviteDetails() -> FT:
 
 def PersonalMessage(guest: dict) -> FT:
     first_name = guest["name"].split()[0]
-    msg = CATEGORY_MESSAGES.get(guest["category"], CATEGORY_MESSAGES["General"])
+    msg = guest.get("custom_message") or CATEGORY_MESSAGES.get(guest["category"], CATEGORY_MESSAGES["General"])
     return Section(
         _section_petals(6, ['#A8DCC8','#7EC4AE','#C8F0E4','#B8E8D4','#F2C4CE']),
         Span('🌹', cls='floral-watermark', style='top:5%;left:-2%;--fw-size:10rem;--fw-op:0.04;--fw-dur:16s;--fw-delay:0s;'),
@@ -2274,10 +2274,14 @@ def CategoryBadge(category: str) -> FT:
 def WhatsAppButton(guest: dict) -> FT:
     first_name = guest["name"].split()[0]
     invite_url = f"{BASE_URL}/invite/{guest['slug']}"
-    msg = (
-        f"Hi {first_name}! 🎊 Your personalized wedding invitation from Nikolai & Valentina "
-        f"is ready. Tap to open: {invite_url}"
-    )
+    custom = guest.get("custom_message")
+    if custom:
+        msg = f"Hi {first_name}! 💌 {custom}\n\nYour personal wedding invitation: {invite_url}"
+    else:
+        msg = (
+            f"Hi {first_name}! 🎊 Your personalized wedding invitation from Nikolai & Valentina "
+            f"is ready. Tap to open: {invite_url}"
+        )
     phone = format_phone(guest.get("phone", ""))
     wa_url = f"https://wa.me/{phone}?text={urllib.parse.quote(msg)}"
     return A(
@@ -2364,13 +2368,18 @@ def AdminRow(guest: dict) -> FT:
         cls="flex items-center gap-1.5",
     )
 
+    has_custom = bool(guest.get("custom_message"))
     return Tr(
         Td(
             P(guest["name"], cls="font-medium text-stone-800 text-sm"),
             P(guest.get("phone", "—"), cls="text-xs text-stone-400 mt-0.5"),
             cls="px-4 py-3",
         ),
-        Td(CategoryBadge(guest["category"]), cls="px-4 py-3"),
+        Td(
+            CategoryBadge(guest["category"]),
+            Span("✎ custom msg", cls="ml-2 text-[10px] text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded-full") if has_custom else "",
+            cls="px-4 py-3",
+        ),
         Td(StatusBadge(guest["rsvp_status"]), cls="px-4 py-3"),
         Td(
             "✓" if guest["plus_one"] else "—",
@@ -2390,7 +2399,9 @@ def EditGuestRow(guest: dict) -> FT:
         "focus:outline-none focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37]"
     )
     select_cls = input_cls + " bg-white"
+    category_default = CATEGORY_MESSAGES.get(guest["category"], CATEGORY_MESSAGES["General"])
     return Tr(
+        # Col 1: name + phone
         Td(
             Input(type="text", name="name", value=guest["name"],
                   required=True, cls=input_cls, form=f"edit-{slug}"),
@@ -2398,6 +2409,7 @@ def EditGuestRow(guest: dict) -> FT:
                   cls=f"{input_cls} mt-1", form=f"edit-{slug}"),
             cls="px-4 py-3 space-y-1",
         ),
+        # Col 2: category
         Td(
             Select(
                 Option("General", value="General", selected=guest["category"] == "General"),
@@ -2409,12 +2421,22 @@ def EditGuestRow(guest: dict) -> FT:
             ),
             cls="px-4 py-3",
         ),
-        Td(StatusBadge(guest["rsvp_status"]), cls="px-4 py-3"),
+        # Col 3: custom message (spans RSVP + +1 + Opened columns visually via colspan)
         Td(
-            "✓" if guest["plus_one"] else "—",
-            cls="px-4 py-3 text-sm text-stone-500 text-center",
+            P("Personal message for their invite + WhatsApp:",
+              cls="text-xs text-stone-400 mb-1"),
+            Textarea(
+                guest.get("custom_message") or "",
+                name="custom_message",
+                rows="3",
+                placeholder=f'Leave blank to use category default:\n"{category_default[:80]}…"',
+                cls=f"{input_cls} resize-none",
+                form=f"edit-{slug}",
+            ),
+            colspan="3",
+            cls="px-4 py-3",
         ),
-        Td(OpenedAt(guest.get("opened_at")), cls="px-4 py-3"),
+        # Col 6: save/cancel
         Td(
             Form(
                 Button(
@@ -2440,7 +2462,7 @@ def EditGuestRow(guest: dict) -> FT:
                 hx_post=f"/admin/guests/{slug}/edit",
                 hx_target="closest tr",
                 hx_swap="outerHTML",
-                cls="flex gap-2 items-center",
+                cls="flex flex-col gap-2",
             ),
             cls="px-4 py-3",
         ),
