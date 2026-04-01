@@ -242,8 +242,8 @@ def post(name: str, phone: str, category: str = "General"):
 # ---------------------------------------------------------------------------
 
 init_db()
-import os
+import os, uvicorn
 _raw_port = int(os.environ.get("PORT", 5001))
 # Privileged ports (<1024) fail for non-root users; fall back to 5001
 port = _raw_port if _raw_port >= 1024 else 5001
-serve(host="0.0.0.0", port=port)
+uvicorn.run(app, host="0.0.0.0", port=port)

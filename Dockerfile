@@ -56,7 +56,8 @@ FROM base AS runtime
 
 # Non-root user — least-privilege principle
 RUN groupadd --system appgroup \
-    && useradd --system --gid appgroup --no-create-home appuser
+    && useradd --system --gid appgroup --no-create-home appuser \
+    && chown appuser:appgroup /app
 
 # Pull in the resolved virtual-environment from builder
 COPY --from=builder /app/.venv /app/.venv
