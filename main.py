@@ -4,8 +4,9 @@ from dotenv import load_dotenv
 
 from db import (init_db, get_guest, mark_opened, update_rsvp, get_all_guests,
                 add_guest, delete_guest, update_guest,
-                save_reservation, save_song_request, get_reservations, get_song_requests)
-from components import InvitePage, AdminPage, RSVPSuccess, NewGuestRow, PreviewInvitePage, AdminRow, EditGuestRow, SharePanel, AttendanceSection
+                save_reservation, save_song_request, get_reservations, get_song_requests,
+                get_guest_songs)
+from components import InvitePage, AdminPage, RSVPSuccess, NewGuestRow, PreviewInvitePage, AdminRow, EditGuestRow, SharePanel, AttendanceSection, AdminResponsePanel
 
 load_dotenv()
 
@@ -270,6 +271,15 @@ def get(slug: str):
     if not guest:
         return Response(status_code=404)
     return SharePanel(guest)
+
+
+@rt("/admin/guests/{slug}/response")
+def get(slug: str):
+    guest = get_guest(slug)
+    if not guest:
+        return Response(status_code=404)
+    songs = get_guest_songs(slug)
+    return AdminResponsePanel(guest, songs)
 
 
 @rt("/admin/guests/{slug}")

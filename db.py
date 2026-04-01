@@ -172,10 +172,11 @@ def get_reservations() -> list[dict]:
     with _get_pool().connection() as conn:
         with conn.cursor(row_factory=dict_row) as cur:
             cur.execute("""
-                SELECT slug, name, phone, category, guest_count, dietary, special_notes
+                SELECT slug, name, phone, category, rsvp_status,
+                       guest_count, dietary, special_notes
                 FROM guests
-                WHERE guest_count IS NOT NULL
-                ORDER BY name
+                WHERE rsvp_status != 'pending'
+                ORDER BY rsvp_status, name
             """)
             return cur.fetchall()
 
@@ -188,6 +189,16 @@ def save_song_request(slug: str, song: str, artist: str, dedication: str) -> Non
             (slug, song, artist, dedication),
         )
         conn.commit()
+
+
+def get_guest_songs(slug: str) -> list[dict]:
+    with _get_pool().connection() as conn:
+        with conn.cursor(row_factory=dict_row) as cur:
+            cur.execute(
+                "SELECT song, artist, dedication FROM song_requests WHERE slug = %s ORDER BY id",
+                (slug,),
+            )
+            return cur.fetchall()
 
 
 def get_song_requests() -> list[dict]:

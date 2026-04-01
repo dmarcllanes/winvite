@@ -201,9 +201,9 @@ def BookOpeningOverlay(name: str | None = None) -> FT:
     )
 
 CATEGORY_MESSAGES = {
-    "Barkada": (
-        "Huy! Imbita ka namin sa pinaka-epic na kasal na mangyayari! 🎉 "
-        "Ikaw ay espesyal sa amin kaya wag kang mag-no-show, ha!"
+    "Friends": (
+        "You're one of the people who makes life more fun and memorable — "
+        "we wouldn't have it any other way than celebrating this day with you! 🎉"
     ),
     "Family": (
         "With all our love and gratitude, we would be deeply honored "
@@ -230,7 +230,7 @@ RSVP_STATUS_STYLES = {
 }
 
 CATEGORY_STYLES = {
-    "Barkada": "bg-purple-100 text-purple-700",
+    "Friends": "bg-purple-100 text-purple-700",
     "Family":  "bg-amber-100 text-amber-700",
     "VIP":     "bg-yellow-100 text-yellow-800",
     "Work":    "bg-blue-100 text-blue-700",
@@ -1196,11 +1196,6 @@ def AttendanceSection(guest: dict) -> FT:
                 ),
                 cls="grid grid-cols-2 gap-3 mb-5",
             ),
-            Label(
-                Input(type="checkbox", name="plus_one", value="on", cls="w-4 h-4 accent-[#C07840] mr-3"),
-                "I'll be bringing a guest (+1)",
-                cls="flex items-center justify-center text-xs text-[#A88060] uppercase tracking-widest cursor-pointer",
-            ),
             cls="att-step active", data_step="0",
         ),
         # Step 2 — Guest count
@@ -1219,12 +1214,33 @@ def AttendanceSection(guest: dict) -> FT:
         # Step 4 — Song request
         Div(
             P("Request a song 🎵", cls="font-serif text-lg text-[#5C4A4A] text-center mb-1"),
-            P("Optional — leave blank to skip", cls="font-sans text-xs text-[#B09090] text-center mb-5"),
-            _field("Song title", "song_title", "e.g. Perfect"),
-            _field("Artist / band", "song_artist", "e.g. Ed Sheeran"),
-            _field("Dedication", "song_message", "A message for the couple? 🌹", tag="textarea"),
+            P("Would you like to request a song?", cls="font-sans text-xs text-[#B09090] text-center mb-4"),
+            Div(
+                Label(
+                    Input(type="radio", name="song_opt", value="yes",
+                          cls="w-4 h-4 accent-[#C4687A] mr-2",
+                          onchange="document.getElementById('song-fields').style.display='block'"),
+                    "Yes, I have a request 🎶",
+                    cls="flex items-center text-sm text-[#5C4A4A] cursor-pointer",
+                ),
+                Label(
+                    Input(type="radio", name="song_opt", value="no", checked=True,
+                          cls="w-4 h-4 accent-[#B09090] mr-2",
+                          onchange="document.getElementById('song-fields').style.display='none'"),
+                    "No, skip this step",
+                    cls="flex items-center text-sm text-[#B09090] cursor-pointer",
+                ),
+                cls="flex flex-col gap-2 mb-4 px-1",
+            ),
+            Div(
+                _field("Song title", "song_title", "e.g. Perfect"),
+                _field("Artist / band", "song_artist", "e.g. Ed Sheeran"),
+                _field("Dedication", "song_message", "A message for the couple? 🌹", tag="textarea"),
+                id="song-fields", style="display:none;",
+            ),
             cls="att-step", data_step="3",
         ),
+        id="att-form",
         hx_post="/attend",
         hx_target="#attendance-section",
         hx_swap="outerHTML",
@@ -1248,7 +1264,7 @@ def AttendanceSection(guest: dict) -> FT:
             Div(
                 Button("← Back", cls="att-btn-back", type="button", style="display:none;"),
                 Button("Next →", cls="att-btn-next", type="button"),
-                Button("Confirm My Attendance ✓", cls="att-btn-submit", type="submit", style="display:none;"),
+                Button("Confirm My Attendance ✓", cls="att-btn-submit", type="submit", form="att-form", style="display:none;"),
                 cls="att-actions",
             ),
             id="att-sheet", style="position:relative;",
@@ -1256,31 +1272,82 @@ def AttendanceSection(guest: dict) -> FT:
         id="att-backdrop",
     )
 
+    status = guest["rsvp_status"]
+    already_responded = status != "pending"
+    is_attending = status == "attending"
+
+    if already_responded:
+        # Build their response summary
+        res_rows = []
+        if is_attending:
+            if guest.get("guest_count"):
+                res_rows.append(("Seats reserved", guest["guest_count"]))
+            if guest.get("dietary"):
+                res_rows.append(("Dietary", guest["dietary"]))
+            if guest.get("special_notes"):
+                res_rows.append(("Notes", guest["special_notes"]))
+
+        response_detail = Div(
+            *[
+                Div(
+                    Span(lbl, cls="text-xs text-[#B09090] uppercase tracking-wider w-28 shrink-0"),
+                    Span(val, cls="text-sm text-[#5C4A4A]"),
+                    cls="flex gap-3 items-start border-b border-[#F0E8E4] py-1.5 last:border-0",
+                )
+                for lbl, val in res_rows
+            ],
+            id="resp-detail",
+            style="display:none;margin-top:1rem;text-align:left;",
+        )
+
+        cta = Div(
+            P(
+                ("✓ You're on the list!" if is_attending else "✗ You've declined the invitation"),
+                cls=f"font-serif text-xl {'text-[#22A05A]' if is_attending else 'text-[#C4687A]'} mb-2",
+            ),
+            P(
+                ("We can't wait to celebrate with you! 🎉" if is_attending else "We'll miss you on our special day."),
+                cls="font-sans text-xs text-[#B09090] mb-6",
+            ),
+            Button(
+                "View My Response",
+                onclick="var d=document.getElementById('resp-detail');var b=this;if(d.style.display==='none'){d.style.display='block';b.textContent='Hide Response';}else{d.style.display='none';b.textContent='View My Response';}",
+                type="button",
+                cls="px-6 py-2.5 rounded-2xl border border-[#E8D8D0] bg-white text-[#8C7070] text-xs font-semibold uppercase tracking-widest hover:bg-[#FDF8F5] transition-all",
+            ) if (res_rows) else "",
+            response_detail,
+            cls="max-w-sm mx-auto text-center",
+        )
+    else:
+        cta = Div(
+            Button(
+                "Confirm My Attendance",
+                onclick="window._attOpen()",
+                type="button",
+                cls="w-full max-w-sm mx-auto block py-4 rounded-2xl font-sans font-semibold text-sm uppercase tracking-[.25em] text-white bg-[#C07840] hover:bg-[#A86030] shadow-md shadow-[#F7C8A0]/50 transition-all duration-200 active:scale-[.98] scroll-reveal sr-d4",
+            ),
+        )
+
     return Div(
         Section(
             css,
             _section_petals(7, ['#F7C8A0','#F0A878','#F4D8BC','#F2C4CE','#CDB8EC']),
             Div(*hearts, style='position:absolute;inset:0;pointer-events:none;overflow:hidden;'),
             Div(*corner_flowers, style='position:absolute;inset:0;pointer-events:none;overflow:hidden;'),
-            modal,
+            modal if not already_responded else "",
             Div(
                 Div(_ornament(), cls='scroll-reveal'),
                 Div(cls="h-10"),
                 H2("Will you join us?", cls="font-serif text-4xl md:text-5xl text-[#6A3A28] mb-4 text-center scroll-reveal sr-d1"),
                 P("Kindly reply by August 10, 2026", cls="font-sans text-[10px] uppercase tracking-[0.35em] text-[#A88060] text-center mb-8 scroll-reveal sr-d2"),
                 P(guest["name"], cls="font-serif italic text-[#C07840] text-xl text-center mb-10 scroll-reveal sr-d2"),
-                Button(
-                    "Confirm My Attendance",
-                    onclick="window._attOpen()",
-                    type="button",
-                    cls="w-full max-w-sm mx-auto block py-4 rounded-2xl font-sans font-semibold text-sm uppercase tracking-[.25em] text-white bg-[#C07840] hover:bg-[#A86030] shadow-md shadow-[#F7C8A0]/50 transition-all duration-200 active:scale-[.98] scroll-reveal sr-d4",
-                ),
+                cta,
                 Div(cls="h-16"),
                 cls="max-w-lg mx-auto px-8 py-20 text-center section-inner",
             ),
             cls="bg-transparent relative section-canvas",
         ),
-        js,
+        js if not already_responded else "",
         id="attendance-section",
     )
 
@@ -2467,6 +2534,7 @@ def InvitePage(guest: dict) -> FT:
     return (
         Title(f"You're Invited · {guest['name']}"),
         Main(
+            TopMarqueeBanner(),
             BookOpeningOverlay(name=guest["name"]),
             Div(InviteHero(name=guest["name"]), cls="invite-section"),
             _section_separator(),
@@ -2561,58 +2629,16 @@ def SharePanel(guest: dict) -> FT:
     wa_text   = f"Hi {first}! 💌 {custom}\n\nYour personal wedding invitation: {url}" if custom else \
                 f"Hi {first}! 🎊 Your personalized wedding invitation is ready. Tap to open: {url}"
 
-    enc_url  = urllib.parse.quote(url, safe="")
-    enc_wa   = urllib.parse.quote(wa_text, safe="")
-    enc_mail = urllib.parse.quote(f"Hi {first},\n\nYour personalized wedding invitation is ready:\n{url}\n\nSee you there! 🎊", safe="")
-
-    platforms = [
-        # (label, icon_svg_path_or_text, href, bg, text_color)
-        ("Copy Link",  "copy",           "javascript:void(0)",
-         "bg-[#F5EEEA] hover:bg-[#EAD8D0]", "text-[#6A5A5A]",
-         f"onclick=\"navigator.clipboard.writeText('{url}');this.textContent='✓ Copied!';setTimeout(()=>this.textContent='Copy Link',2000)\""),
-        ("WhatsApp",   "message-circle",
-         f"https://api.whatsapp.com/send?text={enc_wa}",
-         "bg-green-100 hover:bg-green-200", "text-green-700", ""),
-        ("Facebook",   "facebook",
-         f"https://www.facebook.com/sharer/sharer.php?u={enc_url}",
-         "bg-blue-100 hover:bg-blue-200", "text-blue-700", ""),
-        ("Messenger",  "message-square",
-         f"fb-messenger://share/?link={enc_url}",
-         "bg-indigo-100 hover:bg-indigo-200", "text-indigo-700", ""),
-        ("Telegram",   "send",
-         f"https://t.me/share/url?url={enc_url}&text={urllib.parse.quote(f'Hi {first}! Your wedding invitation is ready 🎊', safe='')}",
-         "bg-sky-100 hover:bg-sky-200", "text-sky-700", ""),
-        ("Viber",      "phone",
-         f"viber://forward?text={enc_wa}",
-         "bg-purple-100 hover:bg-purple-200", "text-purple-700", ""),
-        ("SMS",        "smartphone",
-         f"sms:?body={enc_wa}",
-         "bg-orange-100 hover:bg-orange-200", "text-orange-700", ""),
-        ("Email",      "mail",
-         f"mailto:?subject={urllib.parse.quote(f'Your Wedding Invitation from Nikolai & Valentina', safe='')}&body={enc_mail}",
-         "bg-rose-100 hover:bg-rose-200", "text-rose-700", ""),
-    ]
-
-    btns = []
-    for label, icon, href, bg, tc, extra_attrs in platforms:
-        extra = {}
-        if extra_attrs:
-            # parse onclick= string into dict key
-            extra["onclick"] = extra_attrs.split('onclick="')[1].rstrip('"')
-        target = "" if href.startswith(("javascript", "sms:", "viber:", "mailto:", "fb-messenger:")) else "_blank"
-        btns.append(
-            A(
-                I(data_lucide=icon, cls="w-4 h-4 mb-1"),
-                Span(label, cls="text-[10px] font-medium leading-none"),
-                href=href,
-                target=target,
-                cls=(
-                    f"flex flex-col items-center justify-center gap-0.5 px-3 py-2.5 "
-                    f"rounded-xl {bg} {tc} transition-colors cursor-pointer min-w-[64px]"
-                ),
-                **extra,
-            )
-        )
+    copy_btn = Button(
+        I(data_lucide="copy", cls="w-4 h-4 mr-2"),
+        Span("Copy Link", cls="text-sm font-medium"),
+        type="button",
+        onclick=f"navigator.clipboard.writeText('{url}');this.querySelector('span').textContent='✓ Copied!';setTimeout(()=>this.querySelector('span').textContent='Copy Link',2000)",
+        cls=(
+            "inline-flex items-center px-4 py-2.5 rounded-xl "
+            "bg-[#F5EEEA] hover:bg-[#EAD8D0] text-[#6A5A5A] transition-colors cursor-pointer"
+        ),
+    )
 
     return Tr(
         Td(
@@ -2634,8 +2660,7 @@ def SharePanel(guest: dict) -> FT:
                     ),
                     cls="flex gap-2 mb-4",
                 ),
-                # Platform buttons
-                Div(*btns, cls="flex flex-wrap gap-2"),
+                Div(copy_btn, cls="flex"),
                 # Close
                 Div(
                     Button(
@@ -2734,6 +2759,7 @@ def AdminRow(guest: dict) -> FT:
         Td(OpenedAt(guest.get("opened_at")), cls="px-4 py-3"),
         Td(actions, cls="px-4 py-3"),
         id=f"guest-row-{slug}",
+        data_rsvp=guest["rsvp_status"],
         cls="border-b border-[#F0E8E4] hover:bg-[#FEF6F3] transition-colors",
     )
 
@@ -2746,36 +2772,47 @@ def EditGuestRow(guest: dict) -> FT:
     )
     select_cls = input_cls + " bg-white"
     category_default = CATEGORY_MESSAGES.get(guest["category"], CATEGORY_MESSAGES["General"])
+    # Build JS map of all category defaults for live textarea update
+    cat_map_js = "{" + ",".join(
+        f'"{k}": {repr(v)}' for k, v in CATEGORY_MESSAGES.items()
+    ) + "}"
+    textarea_id = f"msg-{slug}"
+    select_id   = f"cat-{slug}"
     return Tr(
-        # Col 1: name + phone
+        # Col 1: name
         Td(
             Input(type="text", name="name", value=guest["name"],
                   required=True, cls=input_cls, form=f"edit-{slug}"),
-            Input(type="tel", name="phone", value=guest.get("phone", ""),
-                  cls=f"{input_cls} mt-1", form=f"edit-{slug}"),
-            cls="px-4 py-3 space-y-1",
+            Input(type="hidden", name="phone", value=guest.get("phone", ""),
+                  form=f"edit-{slug}"),
+            cls="px-4 py-3",
         ),
-        # Col 2: category
+        # Col 2: category — updates textarea on change
         Td(
             Select(
                 Option("General", value="General", selected=guest["category"] == "General"),
                 Option("Family",  value="Family",  selected=guest["category"] == "Family"),
-                Option("Barkada", value="Barkada", selected=guest["category"] == "Barkada"),
+                Option("Friends", value="Friends", selected=guest["category"] == "Friends"),
                 Option("VIP",     value="VIP",     selected=guest["category"] == "VIP"),
                 Option("Work",    value="Work",    selected=guest["category"] == "Work"),
-                name="category", cls=select_cls, form=f"edit-{slug}",
+                name="category", id=select_id, cls=select_cls, form=f"edit-{slug}",
+                onchange=(
+                    f"(function(){{var m={cat_map_js};"
+                    f"var ta=document.getElementById('{textarea_id}');"
+                    f"ta.value=m[this.value]||'';}}).call(this)"
+                ),
             ),
             cls="px-4 py-3",
         ),
-        # Col 3: custom message (spans RSVP + +1 + Opened columns visually via colspan)
+        # Col 3: personal message — pre-filled with category default
         Td(
-            P("Personal message for their invite + WhatsApp:",
+            P("Personal message (shown on their invite):",
               cls="text-xs text-[#C0A8A8] mb-1"),
             Textarea(
-                guest.get("custom_message") or "",
+                guest.get("custom_message") or category_default,
                 name="custom_message",
+                id=textarea_id,
                 rows="3",
-                placeholder=f'Leave blank to use category default:\n"{category_default[:80]}…"',
                 cls=f"{input_cls} resize-none",
                 form=f"edit-{slug}",
             ),
@@ -2817,6 +2854,86 @@ def EditGuestRow(guest: dict) -> FT:
     )
 
 
+def AdminResponsePanel(guest: dict, songs: list[dict]) -> FT:
+    slug = guest["slug"]
+    status = guest["rsvp_status"]
+    is_attending = status == "attending"
+
+    status_color = "#22A05A" if is_attending else "#C4687A"
+    status_label = "✓ Attending" if is_attending else "✗ Declined"
+
+    def _row(label, value):
+        if not value:
+            return None
+        return Div(
+            Span(label, cls="text-xs text-[#B09090] uppercase tracking-wider w-28 shrink-0"),
+            Span(value, cls="text-sm text-[#5C4A4A]"),
+            cls="flex gap-3 items-start py-1.5 border-b border-[#F0E8E4] last:border-0",
+        )
+
+    details = [
+        _row("Status", status_label),
+        _row("Guest count", guest.get("guest_count")),
+        _row("Dietary", guest.get("dietary")),
+        _row("Notes", guest.get("special_notes")),
+    ]
+    details = [d for d in details if d is not None]
+
+    song_items = []
+    for s in songs:
+        song_items.append(
+            Div(
+                Span(f"🎵 {s['song']}", cls="text-sm font-medium text-[#5C4A4A]"),
+                Span(f" — {s['artist']}", cls="text-sm text-[#A08080]"),
+                Span(f'  "{s["dedication"]}"', cls="text-xs text-[#B09090] block mt-0.5") if s.get("dedication") else "",
+            )
+        )
+
+    return Tr(
+        Td(
+            Div(
+                Div(
+                    Div(
+                        Span(guest["name"], cls="text-xs font-semibold text-[#B09090] uppercase tracking-wider"),
+                        Span(" · Response Details", cls="text-xs text-[#C0A8A8]"),
+                        cls="flex items-center mb-3",
+                    ),
+                    Div(
+                        Div(
+                            status_label,
+                            style=f"display:inline-block;padding:.3rem .85rem;border-radius:2rem;"
+                                  f"background:{'#EDFBF3' if is_attending else '#FFF0F3'};"
+                                  f"color:{status_color};font-size:.8rem;font-weight:600;"
+                                  f"margin-bottom:.75rem;",
+                        ),
+                        *details,
+                        cls="mb-3",
+                    ) if details else "",
+                    Div(
+                        P("Song Request", cls="text-xs text-[#B09090] uppercase tracking-wider mb-2"),
+                        *song_items,
+                        cls="mt-2",
+                    ) if song_items else "",
+                    cls="flex-1",
+                ),
+                Div(
+                    Button(
+                        I(data_lucide="x", cls="w-3.5 h-3.5 mr-1"), "Close",
+                        cls="inline-flex items-center text-xs text-[#C0A8A8] hover:text-[#8C7070] transition-colors",
+                        onclick="this.closest('tr').remove()",
+                        type="button",
+                    ),
+                    cls="flex justify-end pt-1",
+                ),
+                cls="p-4",
+            ),
+            colspan="6",
+            cls="bg-[#F7F2EF] border-b border-[#E8D8D0]",
+        ),
+        id=f"response-row-{slug}",
+    )
+
+
 def GuestTable(guests: list[dict]) -> FT:
     rows = [AdminRow(g) for g in guests] if guests else [
         Tr(
@@ -2831,7 +2948,40 @@ def GuestTable(guests: list[dict]) -> FT:
     pending   = sum(1 for g in guests if g["rsvp_status"] == "pending")
     declined  = sum(1 for g in guests if g["rsvp_status"] == "declined")
 
+    # Filter tabs
+    filter_tabs = Div(
+        Button("All", onclick="filterGuests('all')",   id="tab-all",      cls="tab-btn tab-active"),
+        Button("✓ Attending", onclick="filterGuests('attending')", id="tab-attending", cls="tab-btn"),
+        Button("✗ Declined",  onclick="filterGuests('declined')",  id="tab-declined",  cls="tab-btn"),
+        Button("⏳ Pending",   onclick="filterGuests('pending')",   id="tab-pending",   cls="tab-btn"),
+        cls="flex gap-2 mb-4 flex-wrap",
+    )
+
+    filter_js = Script("""
+function filterGuests(status) {
+    document.querySelectorAll('#guest-table tr').forEach(function(tr) {
+        var badge = tr.querySelector('[data-rsvp]');
+        if (!badge) return;
+        tr.style.display = (status === 'all' || badge.dataset.rsvp === status) ? '' : 'none';
+    });
+    document.querySelectorAll('.tab-btn').forEach(function(b) { b.classList.remove('tab-active'); });
+    document.getElementById('tab-' + status).classList.add('tab-active');
+}
+""")
+
+    tab_css = Style("""
+.tab-btn {
+    padding: .4rem 1rem; border-radius: .65rem; border: 1.5px solid #E8D8D0;
+    background: white; color: #A89090; font-size: .75rem; font-family: sans-serif;
+    cursor: pointer; transition: all .15s;
+}
+.tab-btn:hover { background: #FAF3F0; }
+.tab-btn.tab-active { background: #5C4A4A; color: white; border-color: #5C4A4A; }
+""")
+
     return Div(
+        tab_css,
+        filter_js,
         # Stats bar
         Div(
             _stat("Users", str(len(guests)), "Total Guests"),
@@ -2840,6 +2990,7 @@ def GuestTable(guests: list[dict]) -> FT:
             _stat("XCircle", str(declined), "Declined"),
             cls="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6",
         ),
+        filter_tabs,
         # Table
         Div(
             Table(
@@ -2884,19 +3035,11 @@ def AddGuestForm() -> FT:
                     "transition-colors"
                 ),
             ),
-            Input(
-                type="tel", name="phone", placeholder="Phone (e.g. 09171234567)",
-                required=True,
-                cls=(
-                    "w-full px-4 py-2.5 rounded-lg border border-[#E8D8D0] text-[#5C4A4A] text-sm"
-                    "focus:outline-none focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37] "
-                    "transition-colors"
-                ),
-            ),
+            Input(type="hidden", name="phone", value=""),
             Select(
                 Option("General", value="General"),
                 Option("Family",  value="Family"),
-                Option("Barkada", value="Barkada"),
+                Option("Friends", value="Friends"),
                 Option("VIP",     value="VIP"),
                 Option("Work",    value="Work"),
                 name="category",
@@ -2928,35 +3071,70 @@ def AddGuestForm() -> FT:
 def ReservationsPanel(reservations: list[dict]) -> FT:
     if not reservations:
         return Div(
-            P("No reservation details submitted yet.",
+            P("No responses yet.",
               cls="text-sm text-[#C0A8A8] italic text-center py-8"),
         )
-    rows = []
-    for r in reservations:
-        rows.append(Tr(
-            Td(
-                P(r["name"], cls="font-medium text-[#5C4A4A] text-sm"),
-                P(r.get("phone", "—"), cls="text-xs text-[#C0A8A8]"),
-                cls="px-4 py-3",
+
+    attending = [r for r in reservations if r["rsvp_status"] == "attending"]
+    declined  = [r for r in reservations if r["rsvp_status"] == "declined"]
+
+    def _detail(label, value):
+        if not value:
+            return None
+        return Div(
+            Span(label, cls="text-[10px] text-[#B09090] uppercase tracking-wider"),
+            Span(value, cls="text-xs text-[#6A5A5A] mt-0.5 block"),
+            cls="flex flex-col",
+        )
+
+    def _card(r):
+        is_att = r["rsvp_status"] == "attending"
+        details = [
+            _detail("Seats", r.get("guest_count")),
+            _detail("Dietary", r.get("dietary")),
+            _detail("Notes", r.get("special_notes")),
+        ]
+        details = [d for d in details if d is not None]
+        return Div(
+            Div(
+                Div(
+                    P(r["name"], cls="font-medium text-[#5C4A4A] text-sm"),
+                    CategoryBadge(r["category"]),
+                    cls="flex items-center gap-2 mb-2",
+                ),
+                Span(
+                    "✓ Attending" if is_att else "✗ Declined",
+                    cls=(
+                        "inline-block text-[10px] font-semibold px-2 py-0.5 rounded-full "
+                        + ("bg-[#EDFBF3] text-[#22A05A]" if is_att else "bg-[#FFF0F3] text-[#C4687A]")
+                    ),
+                ),
             ),
-            Td(CategoryBadge(r["category"]), cls="px-4 py-3"),
-            Td(r.get("guest_count") or "—", cls="px-4 py-3 text-sm text-[#8C7070] text-center"),
-            Td(r.get("dietary") or "—", cls="px-4 py-3 text-sm text-[#8C7070]"),
-            Td(r.get("special_notes") or "—", cls="px-4 py-3 text-sm text-[#B09090] max-w-xs"),
-            cls="border-b border-[#F0E8E4] hover:bg-[#FEF6F3]",
+            Div(*details, cls="flex flex-wrap gap-4 mt-3") if details else "",
+            cls=(
+                "bg-white rounded-xl border px-4 py-3 shadow-[0_1px_6px_rgba(92,74,74,0.07)] "
+                + ("border-[#C8EDD8]" if is_att else "border-[#F2C4CE]")
+            ),
+        )
+
+    cards_att = [_card(r) for r in attending]
+    cards_dec = [_card(r) for r in declined]
+
+    sections = []
+    if cards_att:
+        sections.append(Div(
+            P(f"✓ Attending ({len(attending)})",
+              cls="text-xs font-semibold text-[#22A05A] uppercase tracking-wider mb-3"),
+            Div(*cards_att, cls="grid grid-cols-1 md:grid-cols-2 gap-3"),
         ))
-    return Div(
-        Table(
-            Thead(Tr(
-                *[Th(h, cls="px-4 py-3 text-left text-xs font-semibold text-[#B09090] uppercase tracking-wider")
-                  for h in ["Guest", "Category", "# Guests", "Dietary", "Notes"]],
-                cls="bg-[#FAF3F0] border-b border-[#E8D8D0]",
-            )),
-            Tbody(*rows),
-            cls="w-full",
-        ),
-        cls="overflow-x-auto rounded-xl border border-[#E8D8D0] bg-white shadow-[0_2px_12px_rgba(92,74,74,0.06)]",
-    )
+    if cards_dec:
+        sections.append(Div(
+            P(f"✗ Declined ({len(declined)})",
+              cls="text-xs font-semibold text-[#C4687A] uppercase tracking-wider mb-3 mt-5"),
+            Div(*cards_dec, cls="grid grid-cols-1 md:grid-cols-2 gap-3"),
+        ))
+
+    return Div(*sections)
 
 
 def SongRequestsPanel(songs: list[dict]) -> FT:
