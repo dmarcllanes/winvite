@@ -73,4 +73,4 @@ USER appuser
 
 EXPOSE 5001
 
-CMD ["python", "main.py"]
+CMD ["/app/.venv/bin/python", "-u", "main.py"]
