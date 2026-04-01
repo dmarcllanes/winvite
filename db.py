@@ -39,14 +39,36 @@ def _create_tables() -> None:
     with _get_pool().connection() as conn:
         conn.execute("""
             CREATE TABLE IF NOT EXISTS guests (
-                id          SERIAL PRIMARY KEY,
-                slug        TEXT UNIQUE NOT NULL,
-                name        TEXT NOT NULL,
-                phone       TEXT,
-                category    TEXT NOT NULL DEFAULT 'General',
-                plus_one    BOOLEAN NOT NULL DEFAULT FALSE,
-                rsvp_status TEXT NOT NULL DEFAULT 'pending',
-                opened_at   TIMESTAMPTZ
+                id           SERIAL PRIMARY KEY,
+                slug         TEXT UNIQUE NOT NULL,
+                name         TEXT NOT NULL,
+                phone        TEXT,
+                category     TEXT NOT NULL DEFAULT 'General',
+                plus_one     BOOLEAN NOT NULL DEFAULT FALSE,
+                rsvp_status  TEXT NOT NULL DEFAULT 'pending',
+                opened_at    TIMESTAMPTZ,
+                guest_count  TEXT,
+                dietary      TEXT,
+                special_notes TEXT
+            )
+        """)
+        # Add columns to existing tables that predate this schema
+        for col, definition in [
+            ("guest_count",   "TEXT"),
+            ("dietary",       "TEXT"),
+            ("special_notes", "TEXT"),
+        ]:
+            conn.execute(f"""
+                ALTER TABLE guests ADD COLUMN IF NOT EXISTS {col} {definition}
+            """)
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS song_requests (
+                id           SERIAL PRIMARY KEY,
+                slug         TEXT NOT NULL,
+                song         TEXT NOT NULL,
+                artist       TEXT NOT NULL,
+                dedication   TEXT,
+                submitted_at TIMESTAMPTZ DEFAULT NOW()
             )
         """)
         conn.commit()
@@ -133,6 +155,51 @@ def update_guest(slug: str, name: str, phone: str, category: str) -> dict | None
             )
             conn.commit()
             return cur.fetchone()
+
+
+def save_reservation(slug: str, guest_count: str, dietary: str, special_notes: str) -> None:
+    with _get_pool().connection() as conn:
+        conn.execute(
+            """UPDATE guests SET guest_count=%s, dietary=%s, special_notes=%s
+               WHERE slug=%s""",
+            (guest_count, dietary, special_notes, slug),
+        )
+        conn.commit()
+
+
+def get_reservations() -> list[dict]:
+    with _get_pool().connection() as conn:
+        with conn.cursor(row_factory=dict_row) as cur:
+            cur.execute("""
+                SELECT slug, name, phone, category, guest_count, dietary, special_notes
+                FROM guests
+                WHERE guest_count IS NOT NULL
+                ORDER BY name
+            """)
+            return cur.fetchall()
+
+
+def save_song_request(slug: str, song: str, artist: str, dedication: str) -> None:
+    with _get_pool().connection() as conn:
+        conn.execute(
+            """INSERT INTO song_requests (slug, song, artist, dedication)
+               VALUES (%s, %s, %s, %s)""",
+            (slug, song, artist, dedication),
+        )
+        conn.commit()
+
+
+def get_song_requests() -> list[dict]:
+    with _get_pool().connection() as conn:
+        with conn.cursor(row_factory=dict_row) as cur:
+            cur.execute("""
+                SELECT sr.id, sr.song, sr.artist, sr.dedication,
+                       sr.submitted_at, g.name, g.category
+                FROM song_requests sr
+                LEFT JOIN guests g ON g.slug = sr.slug
+                ORDER BY sr.submitted_at DESC
+            """)
+            return cur.fetchall()
 
 
 def bulk_add_guests(csv_path: str) -> int:

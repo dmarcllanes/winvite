@@ -2557,27 +2557,96 @@ def AddGuestForm() -> FT:
     )
 
 
-def AdminPage(guests: list[dict]) -> FT:
+def ReservationsPanel(reservations: list[dict]) -> FT:
+    if not reservations:
+        return Div(
+            P("No reservation details submitted yet.",
+              cls="text-sm text-stone-400 italic text-center py-8"),
+        )
+    rows = []
+    for r in reservations:
+        rows.append(Tr(
+            Td(
+                P(r["name"], cls="font-medium text-stone-800 text-sm"),
+                P(r.get("phone", "—"), cls="text-xs text-stone-400"),
+                cls="px-4 py-3",
+            ),
+            Td(CategoryBadge(r["category"]), cls="px-4 py-3"),
+            Td(r.get("guest_count") or "—", cls="px-4 py-3 text-sm text-stone-600 text-center"),
+            Td(r.get("dietary") or "—", cls="px-4 py-3 text-sm text-stone-600"),
+            Td(r.get("special_notes") or "—", cls="px-4 py-3 text-sm text-stone-500 max-w-xs"),
+            cls="border-b border-stone-100 hover:bg-stone-50",
+        ))
+    return Div(
+        Table(
+            Thead(Tr(
+                *[Th(h, cls="px-4 py-3 text-left text-xs font-semibold text-stone-500 uppercase tracking-wider")
+                  for h in ["Guest", "Category", "# Guests", "Dietary", "Notes"]],
+                cls="bg-stone-50 border-b border-stone-200",
+            )),
+            Tbody(*rows),
+            cls="w-full",
+        ),
+        cls="overflow-x-auto rounded-xl border border-stone-200 bg-white shadow-sm",
+    )
+
+
+def SongRequestsPanel(songs: list[dict]) -> FT:
+    if not songs:
+        return Div(
+            P("No song requests yet.",
+              cls="text-sm text-stone-400 italic text-center py-8"),
+        )
+    rows = []
+    for s in songs:
+        submitted = ""
+        if s.get("submitted_at"):
+            ts = s["submitted_at"]
+            if hasattr(ts, "strftime"):
+                submitted = ts.strftime("%b %d, %H:%M")
+        rows.append(Tr(
+            Td(
+                P(s.get("name") or "Unknown", cls="font-medium text-stone-800 text-sm"),
+                P(submitted, cls="text-xs text-stone-400"),
+                cls="px-4 py-3",
+            ),
+            Td(
+                P(s["song"], cls="text-sm font-medium text-stone-700"),
+                P(f"by {s['artist']}", cls="text-xs text-stone-400"),
+                cls="px-4 py-3",
+            ),
+            Td(s.get("dedication") or "—", cls="px-4 py-3 text-sm text-stone-500 max-w-xs"),
+            cls="border-b border-stone-100 hover:bg-stone-50",
+        ))
+    return Div(
+        Table(
+            Thead(Tr(
+                *[Th(h, cls="px-4 py-3 text-left text-xs font-semibold text-stone-500 uppercase tracking-wider")
+                  for h in ["Requested By", "Song", "Dedication"]],
+                cls="bg-stone-50 border-b border-stone-200",
+            )),
+            Tbody(*rows),
+            cls="w-full",
+        ),
+        cls="overflow-x-auto rounded-xl border border-stone-200 bg-white shadow-sm",
+    )
+
+
+def AdminPage(guests: list[dict], reservations: list[dict] = None, songs: list[dict] = None) -> FT:
+    reservations = reservations or []
+    songs = songs or []
     return (
         Title("Admin · Winvite"),
         Main(
             # Header
             Div(
                 Div(
-                    H1(
-                        "Admin Dashboard",
-                        cls="font-serif text-3xl text-stone-800",
-                    ),
-                    P(
-                        "Manage your guest list and send personalized invitations.",
-                        cls="text-sm text-stone-400 mt-1",
-                    ),
+                    H1("Admin Dashboard", cls="font-serif text-3xl text-stone-800"),
+                    P("Manage your guest list and send personalized invitations.",
+                      cls="text-sm text-stone-400 mt-1"),
                     cls="flex-1",
                 ),
-                Div(
-                    I(data_lucide="rings", cls="w-8 h-8 text-[#D4AF37]"),
-                    cls="flex items-center",
-                ),
+                Div(I(data_lucide="heart", cls="w-8 h-8 text-[#D4AF37]"), cls="flex items-center"),
                 cls="flex items-start justify-between mb-8",
             ),
             # Add guest
@@ -2588,6 +2657,28 @@ def AdminPage(guests: list[dict]) -> FT:
             ),
             # Guest table
             GuestTable(guests),
+            # Reservations
+            Div(
+                Div(
+                    I(data_lucide="calendar-check", cls="w-5 h-5 text-[#D4AF37] mr-2"),
+                    H2(f"Reservation Responses ({len(reservations)})",
+                       cls="text-base font-semibold text-stone-700"),
+                    cls="flex items-center mb-4",
+                ),
+                ReservationsPanel(reservations),
+                cls="mt-10",
+            ),
+            # Song requests
+            Div(
+                Div(
+                    I(data_lucide="music", cls="w-5 h-5 text-[#D4AF37] mr-2"),
+                    H2(f"Song Requests ({len(songs)})",
+                       cls="text-base font-semibold text-stone-700"),
+                    cls="flex items-center mb-4",
+                ),
+                SongRequestsPanel(songs),
+                cls="mt-10 mb-16",
+            ),
             cls="max-w-5xl mx-auto px-4 py-10",
         ),
         Script("lucide.createIcons();"),

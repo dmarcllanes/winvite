@@ -2,7 +2,9 @@ from fasthtml.common import *
 from starlette.staticfiles import StaticFiles
 from dotenv import load_dotenv
 
-from db import init_db, get_guest, mark_opened, update_rsvp, get_all_guests, add_guest, delete_guest, update_guest
+from db import (init_db, get_guest, mark_opened, update_rsvp, get_all_guests,
+                add_guest, delete_guest, update_guest,
+                save_reservation, save_song_request, get_reservations, get_song_requests)
 from components import InvitePage, AdminPage, RSVPSuccess, NewGuestRow, PreviewInvitePage, AdminRow, EditGuestRow
 
 load_dotenv()
@@ -164,18 +166,14 @@ def post(slug: str, attending: str, plus_one: str = "off"):
 def post(
     slug: str = "",
     form_type: str = "",
-    # Reservation fields
     guest_count: str = "",
     dietary: str = "",
     notes: str = "",
-    # Song request fields
     song_title: str = "",
     song_artist: str = "",
     song_message: str = "",
 ):
-    """Handle reservation details and song request form submissions."""
-    import sqlite3, os as _os, json as _json
-    db_path = _os.path.join(_os.path.dirname(__file__), "guests.db")
+    target_id = "reservation-msg" if form_type == "reservation" else "song-msg"
 
     def _ok(msg: str, color: str = "#7A6AAA") -> FT:
         return Div(
@@ -184,51 +182,35 @@ def post(
                     "padding:0.65rem 1rem;background:rgba(255,255,255,0.8);"
                     "border-radius:0.6rem;border:1px solid rgba(0,0,0,0.06);"
                     "text-align:center;margin-top:0.5rem;"),
-            id="reservation-msg" if form_type == "reservation" else "song-msg",
+            id=target_id,
+        )
+
+    def _err() -> FT:
+        return Div(
+            P("⚠ Something went wrong — please try again.",
+              style="color:#C4687A;font-family:sans-serif;font-size:0.8rem;"
+                    "padding:0.65rem 1rem;background:#FFF5F5;"
+                    "border-radius:0.6rem;text-align:center;margin-top:0.5rem;"),
+            id=target_id,
         )
 
     try:
         if form_type == "reservation":
-            # Store as a JSON note appended to the guest record
-            with sqlite3.connect(db_path) as con:
-                con.execute(
-                    "UPDATE guests SET notes=? WHERE slug=?",
-                    (_json.dumps({
-                        "guest_count": guest_count,
-                        "dietary": dietary,
-                        "special_notes": notes,
-                    }), slug)
-                )
+            save_reservation(slug, guest_count, dietary, notes)
             return _ok(f"Reservation confirmed for {guest_count or '?'} guest(s)! 🌸", "#C4687A")
-
         elif form_type == "song_request":
-            # Append song request to a simple text log, or store in DB notes
-            with sqlite3.connect(db_path) as con:
-                # Try to upsert into a song_requests table
-                con.execute("""CREATE TABLE IF NOT EXISTS song_requests (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    slug TEXT, song TEXT, artist TEXT, dedication TEXT
-                )""")
-                con.execute(
-                    "INSERT INTO song_requests (slug,song,artist,dedication) VALUES (?,?,?,?)",
-                    (slug, song_title, song_artist, song_message)
-                )
+            save_song_request(slug, song_title, song_artist, song_message)
             return _ok(f'🎵 "{song_title}" by {song_artist} added to the playlist!', "#7A6AAA")
-
-    except Exception as e:
-        return Div(
-            P(f"⚠ Something went wrong — please try again.",
-              style="color:#C4687A;font-family:sans-serif;font-size:0.8rem;"
-                    "padding:0.65rem 1rem;background:#FFF5F5;"
-                    "border-radius:0.6rem;text-align:center;margin-top:0.5rem;"),
-            id="reservation-msg" if form_type == "reservation" else "song-msg",
-        )
+    except Exception:
+        return _err()
 
 
 @rt("/admin")
 def get():
     guests = get_all_guests()
-    return AdminPage(guests)
+    reservations = get_reservations()
+    songs = get_song_requests()
+    return AdminPage(guests, reservations, songs)
 
 
 @rt("/admin/guests")
