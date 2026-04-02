@@ -1190,10 +1190,9 @@ def AttendanceSection(guest: dict) -> FT:
   background:rgba(20,10,30,0.55);backdrop-filter:blur(10px);
   display:flex;align-items:flex-end;justify-content:center;
   opacity:0;pointer-events:none;transition:opacity 0.3s ease;
-  /* allow the backdrop itself to scroll on very small viewports */
-  overflow-y:auto;padding:0;
 }
 #att-backdrop.att-open { opacity:1;pointer-events:all; }
+
 #att-sheet {
   width:100%;max-width:520px;
   background:linear-gradient(160deg,#FEFAF8,#F6F0FD);
@@ -1201,32 +1200,30 @@ def AttendanceSection(guest: dict) -> FT:
   box-shadow:0 -20px 60px rgba(120,80,120,0.18);
   transform:translateY(100%);
   transition:transform 0.38s cubic-bezier(.34,1.56,.64,1);
-  /* always scrollable, sized to viewport */
+  /* flex column so header/footer are fixed, only body scrolls */
+  display:flex;flex-direction:column;
   max-height:92dvh;
-  overflow-y:auto;
-  overscroll-behavior:contain;
-  -webkit-overflow-scrolling:touch;
-  flex-shrink:0;
+  overflow:hidden;
 }
 #att-backdrop.att-open #att-sheet { transform:translateY(0); }
 
-/* Desktop: centred dialog, never taller than viewport */
+/* Scrollable middle area */
+#att-sheet-body {
+  flex:1;
+  overflow-y:auto;
+  overscroll-behavior:contain;
+  -webkit-overflow-scrolling:touch;
+}
+
+/* Desktop: centred dialog */
 @media(min-width:600px){
-  #att-backdrop {
-    align-items:center;
-    padding:1.5rem;
-  }
+  #att-backdrop { align-items:center; padding:1.5rem; }
   #att-sheet {
     border-radius:1.75rem;
-    max-height:min(90dvh, 680px);
-    width:100%;
-    max-width:520px;
+    max-height:min(92dvh, 700px);
     transform:scale(0.94) translateY(16px);
-    overflow-y:auto;
   }
-  #att-backdrop.att-open #att-sheet {
-    transform:scale(1) translateY(0);
-  }
+  #att-backdrop.att-open #att-sheet { transform:scale(1) translateY(0); }
 }
 .att-handle{width:40px;height:4px;background:#DDD;border-radius:2px;margin:.8rem auto 0;display:block;}
 .att-dots{display:flex;gap:.45rem;justify-content:center;margin:.75rem 0 .25rem;}
@@ -1425,26 +1422,36 @@ def AttendanceSection(guest: dict) -> FT:
 
     modal = Div(
         Div(
-            Div(cls="att-handle"),
-            Button("✕", id="att-close",
-                   style="position:absolute;top:1rem;right:1rem;width:34px;height:34px;"
-                         "border-radius:50%;border:none;background:rgba(0,0,0,.07);"
-                         "color:#999;font-size:1rem;cursor:pointer;"),
+            # ── Fixed header (never scrolls) ──
             Div(
-                Div("💌", style="font-size:2rem;filter:drop-shadow(0 0 8px #C4687A44);margin-bottom:.4rem;text-align:center;"),
-                P("Confirm My Attendance", style="font-family:serif;font-size:1.3rem;color:#5C4A4A;text-align:center;margin:.3rem 0 .1rem;"),
-                P("RSVP · Reservation · Song Request", style="font-family:sans-serif;font-size:.65rem;text-transform:uppercase;letter-spacing:.25em;color:#B09090;text-align:center;"),
-                dots,
-                style="padding:1.25rem 1.5rem .5rem;",
+                Div(cls="att-handle"),
+                Button("✕", id="att-close",
+                       style="position:absolute;top:1rem;right:1rem;width:34px;height:34px;"
+                             "border-radius:50%;border:none;background:rgba(0,0,0,.07);"
+                             "color:#999;font-size:1rem;cursor:pointer;"),
+                Div(
+                    Div("💌", style="font-size:2rem;filter:drop-shadow(0 0 8px #C4687A44);margin-bottom:.4rem;text-align:center;"),
+                    P("Confirm My Attendance", style="font-family:serif;font-size:1.3rem;color:#5C4A4A;text-align:center;margin:.3rem 0 .1rem;"),
+                    P("RSVP · Reservation · Song Request", style="font-family:sans-serif;font-size:.65rem;text-transform:uppercase;letter-spacing:.25em;color:#B09090;text-align:center;"),
+                    dots,
+                    style="padding:.75rem 1.5rem .25rem;",
+                ),
+                style="position:relative;flex-shrink:0;",
             ),
-            form,
+            # ── Scrollable body ──
+            Div(
+                form,
+                id="att-sheet-body",
+            ),
+            # ── Fixed footer buttons (always visible) ──
             Div(
                 Button("← Back", cls="att-btn-back", type="button", style="display:none;"),
                 Button("Next →", cls="att-btn-next", type="button"),
                 Button("Confirm My Attendance ✓", cls="att-btn-submit", type="submit", form="att-form", style="display:none;"),
                 cls="att-actions",
+                style="flex-shrink:0;border-top:1px solid rgba(200,180,200,0.2);",
             ),
-            id="att-sheet", style="position:relative;",
+            id="att-sheet",
         ),
         id="att-backdrop",
     )
