@@ -299,6 +299,7 @@ def _countdown_unit(el_id: str, label: str) -> FT:
 _COUNTDOWN_JS = Script("""
 (function() {
     var target = new Date('2026-08-24T16:00:00+08:00');
+    var prevS = -1;
     function tick() {
         var diff = target - new Date();
         if (diff < 0) diff = 0;
@@ -309,7 +310,15 @@ _COUNTDOWN_JS = Script("""
         var pad = function(n){ return String(n).padStart(2,'0'); };
         [['cd-days',d],['cd-hours',h],['cd-mins',m],['cd-secs',s]].forEach(function(p){
             var el = document.getElementById(p[0]);
-            if (el) el.textContent = pad(p[1]);
+            if (!el) return;
+            var val = pad(p[1]);
+            if (el.textContent !== val) {
+                el.textContent = val;
+                // tick flash animation
+                el.classList.remove('cd-tick');
+                void el.offsetWidth;
+                el.classList.add('cd-tick');
+            }
         });
     }
     tick();
@@ -977,11 +986,16 @@ def InviteDetails() -> FT:
 
             # ── Google Calendar CTA ────────────────────────────────────
             Div(
-                A(
-                    I(data_lucide="calendar-plus", cls="w-5 h-5 mr-2 flex-shrink-0"),
-                    Span("Add to Google Calendar"),
-                    href=gcal_url, target="_blank", rel="noopener noreferrer",
-                    cls="std-gcal-btn scroll-reveal sr-d6",
+                Div(
+                    A(
+                        I(data_lucide="calendar-plus", cls="w-5 h-5 mr-2 flex-shrink-0"),
+                        Span("Add to Google Calendar"),
+                        href=gcal_url, target="_blank", rel="noopener noreferrer",
+                        cls="std-gcal-btn",
+                        style="--fpw:220px;--fph:48px;",
+                    ),
+                    cls="flower-btn-wrap flower-btn-wrap-gcal scroll-reveal sr-d6",
+                    style="--fpw:220px;--fph:48px;",
                 ),
                 cls="flex justify-center mt-10 mb-2",
             ),
@@ -1216,19 +1230,20 @@ def AttendanceSection(guest: dict) -> FT:
 .att-field input:focus,.att-field textarea:focus,.att-field select:focus{
   border-color:#C4687A;box-shadow:0 0 0 3px rgba(196,104,122,.12);}
 .att-field textarea{resize:none;}
-.att-actions{display:flex;gap:.75rem;padding:.5rem 1.5rem 1.5rem;}
+.att-actions{display:flex;gap:.5rem;padding:.5rem 1.5rem 1.5rem;align-items:center;justify-content:center;flex-wrap:wrap;}
 .att-btn-next,.att-btn-submit{
-  flex:1;padding:.9rem;border:none;cursor:pointer;
+  padding:.82rem 1.8rem;border:none;cursor:pointer;
   background:linear-gradient(135deg,#C4687A,#D47896);color:white;
   font-family:sans-serif;font-size:.82rem;text-transform:uppercase;letter-spacing:.2em;
-  border-radius:55% 45% 50% 50% / 50% 55% 45% 50%;
-  animation:flower-morph-rose 6s ease-in-out infinite, flower-glow-rose 3s ease-in-out infinite;
-  transition:transform .15s;touch-action:manipulation;
-  position:relative;overflow:hidden;}
-.att-btn-next::before,.att-btn-submit::before{
-  content:'🌸';position:absolute;font-size:2rem;opacity:.12;
-  right:-.3rem;top:-.4rem;pointer-events:none;}
-.att-btn-next:active,.att-btn-submit:active{transform:scale(.97);}
+  border-radius:999px;
+  animation:btn-center-glow-rose 3s ease-in-out infinite;
+  transition:transform .18s cubic-bezier(0.34,1.56,0.64,1);
+  touch-action:manipulation;position:relative;z-index:2;overflow:hidden;white-space:nowrap;}
+.att-btn-next::after,.att-btn-submit::after{
+  content:'';position:absolute;inset:0;border-radius:inherit;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.18),transparent);
+  background-size:200% 100%;animation:shimmer 2.8s ease-in-out infinite;}
+.att-btn-next:active,.att-btn-submit:active{transform:scale(.96);}
 .att-btn-back{
   padding:.85rem 1.1rem;border-radius:.85rem;border:1.5px solid #E8D8EC;
   background:white;color:#A89090;font-family:sans-serif;font-size:.82rem;
@@ -1241,9 +1256,11 @@ def AttendanceSection(guest: dict) -> FT:
   if(!bd) return;
   var STEPS = bd.querySelectorAll('.att-step');
   var DOTS  = bd.querySelectorAll('.att-dot');
-  var btnNext   = bd.querySelector('.att-btn-next');
-  var btnSubmit = bd.querySelector('.att-btn-submit');
-  var btnBack   = bd.querySelector('.att-btn-back');
+  var btnNext      = bd.querySelector('.att-btn-next');
+  var btnSubmit    = bd.querySelector('.att-btn-submit');
+  var btnNextWrap  = bd.querySelector('#att-submit-wrap') ? bd.querySelector('.flower-btn-wrap-rose:not(#att-submit-wrap)') : null;
+  var btnSubmitWrap= bd.querySelector('#att-submit-wrap');
+  var btnBack      = bd.querySelector('.att-btn-back');
   var cur = 0;
 
   function isDeclined(){
@@ -1271,14 +1288,17 @@ def AttendanceSection(guest: dict) -> FT:
       else if(i===n) d.classList.add('active');
     });
     // On step 0 with declined: show Submit immediately, hide Next
+    var showSubmit, showNext;
     if(n === 0 && isDeclined()){
-      btnNext.style.display   = 'none';
-      btnSubmit.style.display = '';
+      showNext = false; showSubmit = true;
     } else {
       var isLast = (n === STEPS.length-1);
-      btnNext.style.display   = isLast ? 'none' : '';
-      btnSubmit.style.display = isLast ? '' : 'none';
+      showNext = !isLast; showSubmit = isLast;
     }
+    if(btnNextWrap)   btnNextWrap.style.display   = showNext   ? '' : 'none';
+    if(btnSubmitWrap) btnSubmitWrap.style.display  = showSubmit ? '' : 'none';
+    btnNext.style.display   = showNext   ? '' : 'none';
+    btnSubmit.style.display = showSubmit ? '' : 'none';
     btnBack.style.display = (n===0) ? 'none' : '';
   }
 
@@ -1409,8 +1429,17 @@ def AttendanceSection(guest: dict) -> FT:
             form,
             Div(
                 Button("← Back", cls="att-btn-back", type="button", style="display:none;"),
-                Button("Next →", cls="att-btn-next", type="button"),
-                Button("Confirm My Attendance ✓", cls="att-btn-submit", type="submit", form="att-form", style="display:none;"),
+                Div(
+                    Button("Next →", cls="att-btn-next", type="button"),
+                    cls="flower-btn-wrap flower-btn-wrap-rose",
+                    style="--fpw:160px;--fph:44px;",
+                ),
+                Div(
+                    Button("Confirm My Attendance ✓", cls="att-btn-submit", type="submit", form="att-form"),
+                    cls="flower-btn-wrap flower-btn-wrap-rose",
+                    style="--fpw:230px;--fph:44px;display:none;",
+                    id="att-submit-wrap",
+                ),
                 cls="att-actions",
             ),
             id="att-sheet", style="position:relative;",
@@ -2394,67 +2423,235 @@ def DressCodeSection() -> FT:
     )
 
 def _nav_cd_unit(el_id: str, label: str) -> FT:
-    """Countdown unit specifically for the white-text sticky navbar."""
+    """Countdown unit — gold shimmer number, soft label."""
     return Div(
         Span(
             "00",
             id=el_id,
-            style=(
-                "display:block;font-family:serif;font-size:1.6rem;line-height:1;"
-                "color:#ffffff;font-weight:600;letter-spacing:0.04em;"
-                "text-shadow:0 0 12px rgba(255,200,230,0.8),0 0 4px rgba(255,255,255,0.6);"
-                "tabular-nums;"
-            ),
+            cls="cd-digit",
         ),
-        Span(
-            label,
-            style=(
-                "display:block;font-family:sans-serif;font-size:0.6rem;"
-                "text-transform:uppercase;letter-spacing:0.25em;"
-                "color:rgba(255,220,235,0.85);margin-top:2px;"
-            ),
-        ),
-        style="text-align:center;min-width:44px;",
+        Span(label, cls="cd-label"),
+        cls="cd-unit",
     )
 
 
 def CountdownNavbar() -> FT:
-    """Sticky bottom artistic countdown bar — always visible, fully white text."""
-    colon = Span(
-        ":",
-        style=(
-            "font-family:serif;font-size:1.3rem;color:rgba(255,200,230,0.7);"
-            "align-self:flex-start;margin-top:3px;margin-left:2px;margin-right:2px;"
-        ),
-    )
+    """Sticky bottom navbar — banner-matched dark plum/gold theme with layered animations."""
+    css = Style("""
+/* ── Countdown Navbar ─────────────────────────────────────── */
+#countdown-bar {
+  position: fixed; bottom: 0; left: 0; right: 0; z-index: 8000;
+  padding: 0.6rem 1.25rem;
+  background: linear-gradient(90deg,
+    #2A1A2E 0%, #4A2A3E 25%, #3A1A2E 50%, #5C3A4E 75%, #2A1A2E 100%);
+  background-size: 400% 100%;
+  animation: navbar-bg-drift 14s ease-in-out infinite;
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  box-shadow: 0 -1px 0 rgba(212,175,55,0.35), 0 -6px 40px rgba(42,26,46,0.7);
+  overflow: hidden;
+}
+@keyframes navbar-bg-drift {
+  0%,100% { background-position: 0% 50%; }
+  50%      { background-position: 100% 50%; }
+}
+
+/* Gold shimmer top border — layer 1 */
+#countdown-bar::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; height: 1.5px;
+  background: linear-gradient(90deg,
+    transparent 0%, #D4AF37 20%, #F5E07B 50%, #D4AF37 80%, transparent 100%);
+  background-size: 200% 100%;
+  animation: navbar-border-shimmer 3s linear infinite;
+}
+/* Rose shimmer top border — layer 2 (offset) */
+#countdown-bar::after {
+  content: '';
+  position: absolute; top: 1.5px; left: 0; right: 0; height: 1px;
+  background: linear-gradient(90deg,
+    transparent 0%, #C4687A 30%, #F2C4CE 50%, #C4687A 70%, transparent 100%);
+  background-size: 200% 100%;
+  animation: navbar-border-shimmer 4s linear infinite reverse;
+  opacity: 0.5;
+}
+@keyframes navbar-border-shimmer {
+  0%   { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
+/* ── Layout ── */
+.cd-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  position: relative;
+  z-index: 1;
+}
+
+/* ── Left label ── */
+.cd-eyebrow {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  margin-right: 1rem;
+  gap: 2px;
+}
+.cd-eyebrow-icon {
+  font-size: 1rem;
+  filter: drop-shadow(0 0 6px rgba(212,175,55,0.9));
+  animation: cd-icon-pulse 2.5s ease-in-out infinite;
+}
+@keyframes cd-icon-pulse {
+  0%,100% { transform: scale(1);    filter: drop-shadow(0 0 6px rgba(212,175,55,0.7)); }
+  50%      { transform: scale(1.15); filter: drop-shadow(0 0 12px rgba(212,175,55,1.0)); }
+}
+.cd-eyebrow-text {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.52rem;
+  text-transform: uppercase;
+  letter-spacing: 0.32em;
+  background: linear-gradient(90deg, #D4AF37, #F5E07B, #D4AF37);
+  background-size: 200% auto;
+  -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: navbar-border-shimmer 3s linear infinite;
+  white-space: nowrap;
+}
+
+/* ── Divider ── */
+.cd-vdiv {
+  width: 1px; height: 2rem;
+  background: linear-gradient(180deg, transparent, rgba(212,175,55,0.4), transparent);
+  margin: 0 0.9rem;
+  display: none;
+}
+
+/* ── Digit units ── */
+.cd-units { display: flex; align-items: flex-start; gap: 2px; }
+.cd-unit   { text-align: center; min-width: 42px; }
+
+.cd-digit {
+  display: block;
+  font-family: 'Playfair Display', serif;
+  font-size: 1.55rem;
+  font-weight: 700;
+  line-height: 1;
+  background: linear-gradient(180deg, #F5E07B 0%, #D4AF37 50%, #C4A028 100%);
+  -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: none;
+  filter: drop-shadow(0 0 8px rgba(212,175,55,0.6));
+  animation: cd-digit-glow 2.8s ease-in-out infinite;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.04em;
+}
+@keyframes cd-digit-glow {
+  0%,100% { filter: drop-shadow(0 0 6px rgba(212,175,55,0.5)); }
+  50%      { filter: drop-shadow(0 0 14px rgba(212,175,55,0.9)); }
+}
+.cd-digit.cd-tick {
+  animation: cd-tick-flash 0.18s ease-out;
+}
+@keyframes cd-tick-flash {
+  0%   { transform: scale(1.18); filter: drop-shadow(0 0 18px rgba(245,224,123,1)); }
+  100% { transform: scale(1); }
+}
+
+.cd-label {
+  display: block;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.52rem;
+  text-transform: uppercase;
+  letter-spacing: 0.28em;
+  color: rgba(255,220,235,0.65);
+  margin-top: 3px;
+}
+
+/* ── Colon separator ── */
+.cd-colon {
+  font-family: serif;
+  font-size: 1.3rem;
+  color: rgba(212,175,55,0.5);
+  align-self: flex-start;
+  margin-top: 3px;
+  padding: 0 3px;
+  animation: cd-colon-blink 1s step-end infinite;
+}
+@keyframes cd-colon-blink {
+  0%,100% { opacity: 1; }
+  50%      { opacity: 0.2; }
+}
+
+/* ── Right date block ── */
+.cd-date-block {
+  display: none;
+  align-items: center;
+}
+.cd-date-inner { text-align: center; }
+.cd-date-day {
+  font-family: 'Playfair Display', serif;
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #fff;
+  line-height: 1;
+  text-shadow: 0 0 10px rgba(212,175,55,0.6);
+}
+.cd-date-year {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.50rem;
+  text-transform: uppercase;
+  letter-spacing: 0.32em;
+  color: rgba(245,224,123,0.65);
+  margin-top: 2px;
+}
+
+/* ── Ambient floating sparkle particles ── */
+.cd-spark {
+  position: absolute;
+  width: 3px; height: 3px;
+  border-radius: 50%;
+  background: #D4AF37;
+  box-shadow: 0 0 5px 2px rgba(212,175,55,0.7);
+  animation: cd-spark-float var(--cd-dur, 4s) ease-in-out infinite var(--cd-delay, 0s);
+  pointer-events: none;
+}
+@keyframes cd-spark-float {
+  0%   { transform: translateY(0) scale(1);    opacity: 0.8; }
+  50%  { transform: translateY(-14px) scale(1.3); opacity: 1; }
+  100% { transform: translateY(0) scale(1);    opacity: 0.8; }
+}
+
+/* ── Responsive show/hide ── */
+@media (min-width: 640px) {
+  .cd-eyebrow, .cd-vdiv, .cd-date-block { display: flex; }
+}
+""")
+
+    colon = Span(":", cls="cd-colon")
+
+    # Ambient sparkle particles
+    sparks = [
+        Div(cls="cd-spark", style=f"left:{p}%;bottom:{b}px;--cd-dur:{d}s;--cd-delay:{dl}s;")
+        for p, b, d, dl in [
+            (8, 8, 3.5, 0.0), (18, 12, 4.2, 0.8), (35, 6, 3.8, 1.5),
+            (52, 10, 4.5, 0.3), (68, 8, 3.2, 1.1), (80, 12, 4.0, 0.6),
+            (92, 7, 3.7, 1.8),
+        ]
+    ]
+
     return Div(
-        # Shimmer top border
-        Div(style=(
-            "position:absolute;top:0;left:0;right:0;height:1px;"
-            "background:linear-gradient(90deg,transparent,rgba(255,200,230,0.6),rgba(255,240,200,0.8),"
-            "rgba(255,200,230,0.6),transparent);"
-        )),
-        # Content row
+        css,
+        *sparks,
         Div(
-            # Left: ring icon + label
+            # Left eyebrow
             Div(
-                Div(
-                    "💍",
-                    style="font-size:1.1rem;line-height:1;margin-bottom:2px;filter:drop-shadow(0 0 6px rgba(255,200,230,0.9));",
-                ),
-                Div(
-                    "Until We Say I Do",
-                    style=(
-                        "font-family:sans-serif;font-size:0.58rem;text-transform:uppercase;"
-                        "letter-spacing:0.3em;color:rgba(255,220,235,0.9);"
-                    ),
-                ),
-                style="display:none;flex-direction:column;align-items:center;margin-right:1.1rem;",
-                id="cd-left-label",
+                Span("💍", cls="cd-eyebrow-icon"),
+                Span("Until We Say I Do", cls="cd-eyebrow-text"),
+                cls="cd-eyebrow",
             ),
-            # Vertical divider
-            Div(style="width:1px;height:2rem;background:rgba(255,200,230,0.25);margin-right:1.1rem;display:none;",
-                id="cd-divider-l"),
+            Div(cls="cd-vdiv"),
             # Countdown digits
             Div(
                 _nav_cd_unit("cd-days",  "Days"),
@@ -2464,64 +2661,38 @@ def CountdownNavbar() -> FT:
                 _nav_cd_unit("cd-mins",  "Min"),
                 colon,
                 _nav_cd_unit("cd-secs",  "Sec"),
-                style="display:flex;align-items:flex-start;gap:2px;",
+                cls="cd-units",
             ),
-            # Right divider + date
+            # Right date
             Div(
-                Div(style="width:1px;height:2rem;background:rgba(255,200,230,0.25);margin-left:1.1rem;margin-right:1.1rem;"),
+                Div(cls="cd-vdiv", style="margin:0 0.85rem 0 0.85rem;display:flex;"),
                 Div(
-                    Div(
-                        "🌸 Aug 24",
-                        style=(
-                            "font-family:serif;font-size:0.85rem;color:#ffffff;"
-                            "font-weight:600;line-height:1;"
-                            "text-shadow:0 0 8px rgba(255,180,210,0.7);"
-                        ),
-                    ),
-                    Div(
-                        "2026",
-                        style=(
-                            "font-family:sans-serif;font-size:0.55rem;text-transform:uppercase;"
-                            "letter-spacing:0.3em;color:rgba(255,220,235,0.75);margin-top:2px;"
-                        ),
-                    ),
-                    style="text-align:center;",
+                    Div("🌸 Aug 24", cls="cd-date-day"),
+                    Div("2026", cls="cd-date-year"),
+                    cls="cd-date-inner",
                 ),
-                style="display:none;align-items:center;",
-                id="cd-right-block",
+                cls="cd-date-block",
             ),
-            style="display:flex;align-items:center;justify-content:center;",
+            cls="cd-row",
         ),
-        # Show hidden elements on sm+ via JS
         Script("""
 (function(){
-  var mq = window.matchMedia('(min-width:640px)');
-  function applyMq(e){
-    var show=e.matches?'flex':'none';
-    ['cd-left-label','cd-divider-l','cd-right-block'].forEach(function(id){
-      var el=document.getElementById(id);
-      if(el) el.style.display=show;
-    });
+  // Flash digit on tick
+  function tickFlash(id){
+    var el = document.getElementById(id);
+    if(!el) return;
+    el.classList.remove('cd-tick');
+    void el.offsetWidth;
+    el.classList.add('cd-tick');
+    setTimeout(function(){ el.classList.remove('cd-tick'); }, 200);
   }
-  applyMq(mq);
-  mq.addEventListener('change',applyMq);
+  // Override countdown updater to add tick flash
+  var _origUpdate = window._cdUpdate;
+  window._cdFlash = tickFlash;
 })();
 """),
         _COUNTDOWN_JS,
         id="countdown-bar",
-        style=(
-            "position:fixed;bottom:0;left:0;right:0;z-index:8000;"
-            "padding:0.65rem 1.5rem;"
-            "background:linear-gradient(105deg,"
-            "rgba(60,20,80,0.88) 0%,"
-            "rgba(130,40,100,0.88) 35%,"
-            "rgba(180,60,120,0.88) 60%,"
-            "rgba(60,20,80,0.88) 100%);"
-            "backdrop-filter:blur(20px);"
-            "-webkit-backdrop-filter:blur(20px);"
-            "box-shadow:0 -6px 40px rgba(150,50,120,0.35),0 -1px 0 rgba(255,200,230,0.12);"
-            "overflow:hidden;"
-        ),
     )
 
 
