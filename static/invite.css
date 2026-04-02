@@ -456,30 +456,30 @@
    WEDDING SECTION EFFECTS — Flowers, Scroll, Petals, Hearts
    ════════════════════════════════════════════════════════════ */
 
-/* ── Scroll-Reveal System ──────────────────────────────────── */
+/* ── Scroll-Reveal System (3D depth entrance) ──────────────── */
 .scroll-reveal {
   opacity: 0;
-  transform: translateY(40px);
-  transition: opacity 1.2s cubic-bezier(0.16, 1, 0.3, 1),
-              transform 1.2s cubic-bezier(0.16, 1, 0.3, 1);
+  transform: translateY(28px) translateZ(-40px) rotateX(4deg);
+  transition: opacity 0.75s cubic-bezier(0.22, 1, 0.36, 1),
+              transform 0.75s cubic-bezier(0.22, 1, 0.36, 1);
+  transform-style: preserve-3d;
+  will-change: opacity, transform;
 }
-.scroll-reveal.sr-visible { opacity: 1; transform: translateY(0); }
-
-.scroll-reveal.from-left  { transform: translateX(-44px); }
-.scroll-reveal.from-right { transform: translateX(44px); }
-.scroll-reveal.from-left.sr-visible  { transform: translateX(0); opacity: 1; }
-.scroll-reveal.from-right.sr-visible { transform: translateX(0); opacity: 1; }
-
-.scroll-reveal.zoom-in { transform: scale(0.94) translateY(20px); }
-.scroll-reveal.zoom-in.sr-visible { transform: scale(1) translateY(0); opacity: 1; }
+.scroll-reveal.sr-visible {
+  opacity: 1;
+  transform: translateY(0) translateZ(0) rotateX(0) rotateY(0) scale(1);
+}
+.scroll-reveal.from-left  { transform: translateX(-40px) translateZ(-30px) rotateY(6deg); }
+.scroll-reveal.from-right { transform: translateX(40px)  translateZ(-30px) rotateY(-6deg); }
+.scroll-reveal.zoom-in    { transform: scale(0.88) translateZ(-50px); }
 
 /* Stagger delay helpers */
-.sr-d1 { transition-delay: 0.10s; }
-.sr-d2 { transition-delay: 0.22s; }
-.sr-d3 { transition-delay: 0.36s; }
-.sr-d4 { transition-delay: 0.50s; }
-.sr-d5 { transition-delay: 0.66s; }
-.sr-d6 { transition-delay: 0.82s; }
+.sr-d1 { transition-delay: 0.10s !important; }
+.sr-d2 { transition-delay: 0.22s !important; }
+.sr-d3 { transition-delay: 0.36s !important; }
+.sr-d4 { transition-delay: 0.50s !important; }
+.sr-d5 { transition-delay: 0.66s !important; }
+.sr-d6 { transition-delay: 0.82s !important; }
 
 /* ── Section Background Drifting Petals ───────────────────── */
 .petal-field {
@@ -1003,41 +1003,67 @@
 }
 
 /* Google Calendar CTA button */
+/* ── Flower-shape keyframes ─────────────────────────────── */
+@keyframes flower-morph {
+  0%,100% { border-radius: 55% 45% 50% 50% / 50% 55% 45% 50%; }
+  25%      { border-radius: 45% 55% 45% 55% / 55% 45% 55% 45%; }
+  50%      { border-radius: 50% 50% 55% 45% / 45% 50% 50% 55%; }
+  75%      { border-radius: 55% 45% 50% 50% / 55% 45% 55% 45%; }
+}
+@keyframes flower-glow {
+  0%,100% { box-shadow: 0 0 18px 4px rgba(144,112,192,0.30), 0 6px 20px rgba(196,104,122,0.20); }
+  50%      { box-shadow: 0 0 30px 8px rgba(144,112,192,0.50), 0 10px 32px rgba(196,104,122,0.35); }
+}
+@keyframes flower-morph-rose {
+  0%,100% { border-radius: 55% 45% 50% 50% / 50% 55% 45% 50%; }
+  25%      { border-radius: 45% 55% 45% 55% / 55% 45% 55% 45%; }
+  50%      { border-radius: 50% 50% 55% 45% / 45% 50% 50% 55%; }
+  75%      { border-radius: 55% 45% 50% 50% / 55% 45% 55% 45%; }
+}
+@keyframes flower-glow-rose {
+  0%,100% { box-shadow: 0 0 18px 4px rgba(196,104,122,0.30), 0 6px 20px rgba(212,175,55,0.15); }
+  50%      { box-shadow: 0 0 30px 8px rgba(196,104,122,0.50), 0 10px 32px rgba(212,175,55,0.30); }
+}
+
 .std-gcal-btn {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.9rem 2rem;
+  padding: 1rem 2.2rem;
   background: linear-gradient(135deg, #9070C0 0%, #C4687A 100%);
   color: #fff;
-  border-radius: 3rem;
+  border-radius: 55% 45% 50% 50% / 50% 55% 45% 50%;
   font-family: 'Inter', sans-serif;
   font-size: 0.72rem;
-  font-weight: 500;
+  font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.18em;
   text-decoration: none;
-  box-shadow: 0 8px 24px rgba(144,112,192,0.35), 0 2px 6px rgba(0,0,0,0.08);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  animation: flower-morph 6s ease-in-out infinite, flower-glow 3s ease-in-out infinite;
+  transition: transform 0.3s ease;
   position: relative;
   overflow: hidden;
+}
+.std-gcal-btn::before {
+  content: '🌸';
+  position: absolute;
+  font-size: 2.2rem;
+  opacity: 0.12;
+  right: -0.4rem;
+  top: -0.5rem;
+  pointer-events: none;
+  animation: flower-morph 8s ease-in-out infinite reverse;
 }
 .std-gcal-btn::after {
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(
-    90deg,
-    transparent 0%,
-    rgba(255,255,255,0.22) 50%,
-    transparent 100%
-  );
+  background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.18) 50%, transparent 100%);
   background-size: 200% 100%;
   animation: shimmer 2.8s ease-in-out infinite;
 }
 .std-gcal-btn:hover {
-  transform: translateY(-3px) scale(1.02);
-  box-shadow: 0 14px 36px rgba(144,112,192,0.48), 0 4px 10px rgba(0,0,0,0.1);
+  transform: translateY(-3px) scale(1.04);
 }
 
 /* Responsive */

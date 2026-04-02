@@ -501,10 +501,76 @@ def _rsvp_heart(i: int) -> FT:
 
 
 def WeddingEffects() -> FT:
-    """Global JS: IntersectionObserver scroll-reveal + falling petals on scroll."""
-    return Script("""
+    """Global JS + CSS: scroll-reveal, 3D depth entrance, progress bar, ambient shift, spark burst, petals."""
+    css = Style("""
+/* ── Gold scroll progress bar ─────────────────────────── */
+#scroll-progress {
+  position: fixed; top: 0; left: 0; height: 3px; width: 0%;
+  background: linear-gradient(90deg, #D4AF37, #F5E07B, #C4687A, #D4AF37);
+  background-size: 200% 100%;
+  animation: progress-shimmer 2s linear infinite;
+  z-index: 99999;
+  box-shadow: 0 0 10px rgba(212,175,55,0.7), 0 0 20px rgba(212,175,55,0.4);
+  transition: width 0.1s linear;
+  border-radius: 0 2px 2px 0;
+}
+@keyframes progress-shimmer {
+  0%   { background-position: 0% center; }
+  100% { background-position: 200% center; }
+}
+
+/* ── Fast-scroll gold spark ───────────────────────────── */
+.scroll-spark {
+  position: fixed; pointer-events: none; z-index: 99998;
+  width: 4px; height: 4px; border-radius: 50%;
+  background: #D4AF37;
+  box-shadow: 0 0 6px 2px rgba(212,175,55,0.8);
+  animation: spark-fly 0.7s ease-out forwards;
+}
+@keyframes spark-fly {
+  0%   { opacity: 1; transform: translate(0,0) scale(1); }
+  100% { opacity: 0; transform: translate(var(--sx), var(--sy)) scale(0); }
+}
+
+/* ── 3D depth section entrance ────────────────────────── */
+.scroll-reveal {
+  opacity: 0;
+  transform: translateY(28px) translateZ(-40px) rotateX(4deg);
+  transition: opacity 0.75s cubic-bezier(0.22,1,0.36,1),
+              transform 0.75s cubic-bezier(0.22,1,0.36,1);
+  transform-style: preserve-3d;
+  will-change: opacity, transform;
+}
+.scroll-reveal.from-left  { transform: translateX(-40px) translateZ(-30px) rotateY(6deg); }
+.scroll-reveal.from-right { transform: translateX(40px)  translateZ(-30px) rotateY(-6deg); }
+.scroll-reveal.zoom-in    { transform: scale(0.88) translateZ(-50px); }
+.scroll-reveal.sr-visible {
+  opacity: 1;
+  transform: translateY(0) translateZ(0) rotateX(0) rotateY(0) scale(1);
+}
+.sr-d1 { transition-delay: 0.1s !important; }
+.sr-d2 { transition-delay: 0.2s !important; }
+.sr-d3 { transition-delay: 0.3s !important; }
+.sr-d4 { transition-delay: 0.4s !important; }
+.sr-d5 { transition-delay: 0.5s !important; }
+.sr-d6 { transition-delay: 0.6s !important; }
+""")
+
+    return Div(
+        css,
+        Div(id="scroll-progress"),
+        Script("""
 (function(){
-  // ── Scroll-reveal via IntersectionObserver ──
+  // ── Gold scroll progress bar ──────────────────────────────
+  var bar = document.getElementById('scroll-progress');
+  function updateBar(){
+    var h = document.documentElement;
+    var pct = (window.scrollY / (h.scrollHeight - h.clientHeight)) * 100;
+    if(bar) bar.style.width = Math.min(pct, 100) + '%';
+  }
+  window.addEventListener('scroll', updateBar, {passive:true});
+
+  // ── Scroll-reveal via IntersectionObserver ────────────────
   var io = new IntersectionObserver(function(entries){
     entries.forEach(function(e){
       if(e.isIntersecting){
@@ -513,36 +579,70 @@ def WeddingEffects() -> FT:
         vines.forEach(function(v){ v.classList.add('sr-visible'); });
       }
     });
-  }, { threshold: 0.10, rootMargin: '0px 0px -30px 0px' });
-  document.querySelectorAll('.scroll-reveal').forEach(function(el){
-    io.observe(el);
-  });
+  }, { threshold: 0.08, rootMargin: '0px 0px -20px 0px' });
+  document.querySelectorAll('.scroll-reveal').forEach(function(el){ io.observe(el); });
 
-  // ── Polaroid reveal (mem-reveal → mem-in) ────────────────
+  // ── Polaroid reveal ───────────────────────────────────────
   var memIO = new IntersectionObserver(function(entries){
     entries.forEach(function(e){
       if(e.isIntersecting) e.target.classList.add('mem-in');
     });
   }, { threshold: 0.12, rootMargin: '0px 0px -20px 0px' });
-  document.querySelectorAll('.mem-reveal').forEach(function(el){
-    memIO.observe(el);
-  });
+  document.querySelectorAll('.mem-reveal').forEach(function(el){ memIO.observe(el); });
 
-  // ── Falling petals on scroll ── full pastel rainbow
-  var petalColors = [
-    '#F2C4CE','#D47896',  // blush
-    '#CDB8EC','#B89CD8',  // lavender
-    '#A8DCC8','#7EC4AE',  // mint
-    '#F7C8A0','#F0A878',  // peach
-    '#A8CCEC','#80B4DC',  // sky
-    '#FDEEF5','#EEF0FD'   // pale mixed
+  // ── Ambient background color shift per section ────────────
+  var sectionColors = [
+    '#FDF8F5','#FFF0F8','#F6F0FD','#F0FAF6','#FEF4EB','#F4F0FA','#FDF8F5'
   ];
-  var lastDrop = 0, lastY = 0;
+  var sections = document.querySelectorAll('section.section-canvas, section.invite-section');
+  var sectionIO = new IntersectionObserver(function(entries){
+    entries.forEach(function(e){
+      if(e.isIntersecting){
+        var idx = Array.from(sections).indexOf(e.target) % sectionColors.length;
+        document.body.style.transition = 'background 1.2s ease';
+        document.body.style.background = sectionColors[idx];
+      }
+    });
+  }, { threshold: 0.4 });
+  sections.forEach(function(s){ sectionIO.observe(s); });
+
+  // ── Fast-scroll gold spark burst ─────────────────────────
+  var lastSY = 0, lastSparkT = 0;
   window.addEventListener('scroll', function(){
     var now = Date.now();
-    var delta = Math.abs(window.scrollY - lastY);
+    var vel = Math.abs(window.scrollY - lastSY);
+    lastSY = window.scrollY;
+    if(vel < 60 || now - lastSparkT < 120) return;
+    lastSparkT = now;
+    var count = Math.min(6, Math.floor(vel / 50));
+    for(var i = 0; i < count; i++){
+      (function(){
+        var sp = document.createElement('div');
+        sp.className = 'scroll-spark';
+        sp.style.left = (Math.random() * 96 + 2) + 'vw';
+        sp.style.top  = (Math.random() * 70 + 15) + 'vh';
+        var angle = Math.random() * Math.PI * 2;
+        var dist  = 30 + Math.random() * 60;
+        sp.style.setProperty('--sx', (Math.cos(angle)*dist)+'px');
+        sp.style.setProperty('--sy', (Math.sin(angle)*dist)+'px');
+        document.body.appendChild(sp);
+        setTimeout(function(){ sp.remove(); }, 750);
+      })();
+    }
+  }, {passive:true});
+
+  // ── Falling petals on scroll ──────────────────────────────
+  var petalColors = [
+    '#F2C4CE','#D47896','#CDB8EC','#B89CD8',
+    '#A8DCC8','#7EC4AE','#F7C8A0','#F0A878',
+    '#A8CCEC','#80B4DC','#FDEEF5','#EEF0FD'
+  ];
+  var lastDrop = 0, lastPY = 0;
+  window.addEventListener('scroll', function(){
+    var now = Date.now();
+    var delta = Math.abs(window.scrollY - lastPY);
     if(now - lastDrop < 220 || delta < 25) return;
-    lastDrop = now; lastY = window.scrollY;
+    lastDrop = now; lastPY = window.scrollY;
     var count = Math.min(4, Math.floor(delta / 35) + 1);
     for(var j = 0; j < count; j++){
       (function(off){
@@ -550,23 +650,21 @@ def WeddingEffects() -> FT:
           var p = document.createElement('div');
           p.className = 'scroll-petal';
           var color = petalColors[Math.floor(Math.random() * petalColors.length)];
-          var drift = (Math.random() * 130 - 65);
-          var spr   = Math.floor(Math.random() * 360);
-          var sz    = Math.floor(Math.random() * 9 + 7);
+          var sz = Math.floor(Math.random() * 9 + 7);
           p.style.cssText =
             'left:'+(Math.random()*94+2)+'vw;'
             +'width:'+sz+'px;height:'+Math.round(sz*1.4)+'px;'
             +'background:'+color+';'
-            +'--drift:'+drift+'px;'
-            +'--spr:'+spr+'deg;';
+            +'--drift:'+(Math.random()*130-65)+'px;'
+            +'--spr:'+(Math.floor(Math.random()*360))+'deg;';
           document.body.appendChild(p);
           setTimeout(function(){ p.remove(); }, 3400);
         }, off * 90);
       })(j);
     }
-  }, { passive: true });
+  }, {passive:true});
 
-  // ── Gentle parallax on deco flowers ──
+  // ── Multi-speed parallax on deco flowers ─────────────────
   window.addEventListener('scroll', function(){
     var sy = window.scrollY;
     document.querySelectorAll('.deco-flower[data-par="slow"]').forEach(function(el){
@@ -575,9 +673,11 @@ def WeddingEffects() -> FT:
     document.querySelectorAll('.deco-flower[data-par="fast"]').forEach(function(el){
       el.style.transform = 'translateY('+(-sy*0.055)+'px)';
     });
-  }, { passive: true });
+  }, {passive:true});
+
 })();
-    """)
+"""),
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -1049,14 +1149,8 @@ def RSVPForm(guest: dict) -> FT:
         Button(
             "Confirm My Attendance",
             type="submit",
-            cls=(
-                "w-full py-4 rounded-2xl font-sans font-semibold text-sm "
-                "uppercase tracking-[0.25em] text-white "
-                "bg-[#C07840] hover:bg-[#A86030] "
-                "shadow-md shadow-[#F7C8A0]/50 "
-                "transition-all duration-200 active:scale-[0.98] "
-                "scroll-reveal sr-d4"
-            ),
+            cls="att-btn-submit scroll-reveal sr-d4",
+            style="width:100%;",
         ),
                     hx_post="/rsvp",
                     hx_target="#rsvp-section",
@@ -1124,10 +1218,16 @@ def AttendanceSection(guest: dict) -> FT:
 .att-field textarea{resize:none;}
 .att-actions{display:flex;gap:.75rem;padding:.5rem 1.5rem 1.5rem;}
 .att-btn-next,.att-btn-submit{
-  flex:1;padding:.85rem;border-radius:.85rem;border:none;cursor:pointer;
+  flex:1;padding:.9rem;border:none;cursor:pointer;
   background:linear-gradient(135deg,#C4687A,#D47896);color:white;
   font-family:sans-serif;font-size:.82rem;text-transform:uppercase;letter-spacing:.2em;
-  box-shadow:0 4px 16px rgba(196,104,122,.25);transition:transform .15s;touch-action:manipulation;}
+  border-radius:55% 45% 50% 50% / 50% 55% 45% 50%;
+  animation:flower-morph-rose 6s ease-in-out infinite, flower-glow-rose 3s ease-in-out infinite;
+  transition:transform .15s;touch-action:manipulation;
+  position:relative;overflow:hidden;}
+.att-btn-next::before,.att-btn-submit::before{
+  content:'🌸';position:absolute;font-size:2rem;opacity:.12;
+  right:-.3rem;top:-.4rem;pointer-events:none;}
 .att-btn-next:active,.att-btn-submit:active{transform:scale(.97);}
 .att-btn-back{
   padding:.85rem 1.1rem;border-radius:.85rem;border:1.5px solid #E8D8EC;
@@ -2570,6 +2670,52 @@ def InteractiveEffects() -> FT:
     });
   });
 
+  // ── Magnetic pull on CTA buttons ─────────────────────────
+  document.querySelectorAll('.std-gcal-btn, .att-btn-submit, .att-btn-next').forEach(function(btn){
+    btn.addEventListener('mousemove', function(e){
+      var r = btn.getBoundingClientRect();
+      var cx = r.left + r.width  / 2;
+      var cy = r.top  + r.height / 2;
+      var dx = (e.clientX - cx) * 0.28;
+      var dy = (e.clientY - cy) * 0.28;
+      btn.style.transform = 'translate('+dx+'px,'+dy+'px) scale(1.06)';
+      btn.style.transition = 'transform 0.12s ease';
+    });
+    btn.addEventListener('mouseleave', function(){
+      btn.style.transform = 'translate(0,0) scale(1)';
+      btn.style.transition = 'transform 0.5s cubic-bezier(0.34,1.56,0.64,1)';
+    });
+  });
+
+  // ── Section depth parallax (text layers move at diff speeds) ─
+  var depthEls = document.querySelectorAll('[data-depth]');
+  if(depthEls.length){
+    window.addEventListener('scroll', function(){
+      depthEls.forEach(function(el){
+        var depth = parseFloat(el.dataset.depth) || 0.1;
+        var rect  = el.parentElement.getBoundingClientRect();
+        var center = rect.top + rect.height / 2 - window.innerHeight / 2;
+        el.style.transform = 'translateY('+(center * depth)+'px)';
+      });
+    }, {passive:true});
+  }
+
+  // ── Scroll-triggered section scale breathe ───────────────
+  var scaleIO = new IntersectionObserver(function(entries){
+    entries.forEach(function(e){
+      if(e.isIntersecting){
+        e.target.style.transition = 'transform 1.2s cubic-bezier(0.22,1,0.36,1)';
+        e.target.style.transform  = 'scale(1)';
+      } else {
+        e.target.style.transform = 'scale(0.97)';
+      }
+    });
+  }, { threshold: 0.25 });
+  document.querySelectorAll('.section-canvas').forEach(function(s){
+    s.style.transform = 'scale(0.97)';
+    scaleIO.observe(s);
+  });
+
 })();
 """)
 
@@ -3035,9 +3181,8 @@ def GuestTable(guests: list[dict]) -> FT:
     filter_js = Script("""
 function filterGuests(status) {
     document.querySelectorAll('#guest-table tr').forEach(function(tr) {
-        var badge = tr.querySelector('[data-rsvp]');
-        if (!badge) return;
-        tr.style.display = (status === 'all' || badge.dataset.rsvp === status) ? '' : 'none';
+        if (!tr.dataset.rsvp) return;
+        tr.style.display = (status === 'all' || tr.dataset.rsvp === status) ? '' : 'none';
     });
     document.querySelectorAll('.tab-btn').forEach(function(b) { b.classList.remove('tab-active'); });
     document.getElementById('tab-' + status).classList.add('tab-active');
@@ -3118,10 +3263,7 @@ def AddGuestForm() -> FT:
                 Input(type="text", name="name", placeholder="Full Name", required=True, cls=field_cls),
                 cls="flex-1 min-w-[160px]",
             ),
-            Div(
-                Input(type="tel", name="phone", placeholder="Phone (optional)", cls=field_cls),
-                cls="flex-1 min-w-[160px]",
-            ),
+            Input(type="hidden", name="phone", value=""),
             Div(
                 Select(
                     Option("General", value="General"),
@@ -3364,23 +3506,83 @@ def NewGuestRow(guest: dict) -> FT:
 # ---------------------------------------------------------------------------
 
 def TopMarqueeBanner() -> FT:
-    """Animated, artistic moving banner at the very top of the invitation."""
-    anim_css = Style("""
-    .marquee-container { overflow: hidden; white-space: nowrap; width: 100%; border-bottom: 1px solid rgba(255,255,255,0.1); }
-    .marquee-content { display: inline-block; animation: marquee 60s linear infinite; }
-    .marquee-content span { padding-right: 2.5rem; }
-    @keyframes marquee { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+    """Dual-layer shimmer marquee banner — top of every invite page."""
+    css = Style("""
+    .tmb-wrap {
+        position: sticky; top: 0; z-index: 8900; overflow: hidden;
+        background: linear-gradient(90deg, #2A1A2E 0%, #4A2A3E 30%, #3A1A2E 55%, #5C3A4E 80%, #2A1A2E 100%);
+        background-size: 400% 100%;
+        animation: tmb-bg-shift 12s ease-in-out infinite;
+        box-shadow: 0 2px 0 rgba(212,175,55,0.4), 0 4px 20px rgba(42,26,46,0.6);
+    }
+    @keyframes tmb-bg-shift {
+        0%,100% { background-position: 0% 50%; }
+        50%      { background-position: 100% 50%; }
+    }
+    /* Top gold line */
+    .tmb-wrap::before {
+        content:''; position:absolute; top:0; left:0; right:0; height:1.5px;
+        background: linear-gradient(90deg, transparent, #D4AF37, #F5E07B, #D4AF37, transparent);
+        animation: tmb-line-shimmer 3s linear infinite;
+    }
+    /* Bottom gold line */
+    .tmb-wrap::after {
+        content:''; position:absolute; bottom:0; left:0; right:0; height:1.5px;
+        background: linear-gradient(90deg, transparent, #C4687A, #D4AF37, #C4687A, transparent);
+        animation: tmb-line-shimmer 3s linear infinite reverse;
+    }
+    @keyframes tmb-line-shimmer {
+        0%   { background-position: -200% center; }
+        100% { background-position: 200% center; }
+    }
+    .tmb-track { overflow: hidden; white-space: nowrap; padding: 0.45rem 0; }
+    .tmb-track-2 { padding: 0.35rem 0 0.45rem; opacity: 0.55; }
+    .tmb-scroll-l { display: inline-block; animation: tmb-left  35s linear infinite; }
+    .tmb-scroll-r { display: inline-block; animation: tmb-right 45s linear infinite; }
+    @keyframes tmb-left  { 0% { transform: translateX(0); }    100% { transform: translateX(-50%); } }
+    @keyframes tmb-right { 0% { transform: translateX(-50%); } 100% { transform: translateX(0); } }
+    .tmb-item {
+        display: inline-flex; align-items: center; gap: 0.6rem;
+        padding: 0 1.8rem;
+        font-family: 'Inter', sans-serif;
+        font-size: 0.62rem; font-weight: 600;
+        letter-spacing: 0.32em; text-transform: uppercase;
+        background: linear-gradient(90deg, #D4AF37 0%, #F5E07B 40%, #D4AF37 70%, #E8B4BC 100%);
+        background-size: 200% auto;
+        -webkit-background-clip: text; background-clip: text;
+        -webkit-text-fill-color: transparent;
+        animation: tmb-txt-shimmer 4s linear infinite;
+    }
+    .tmb-track-2 .tmb-item {
+        background: linear-gradient(90deg, #E8B4BC 0%, #F2C4CE 40%, #D4AF37 70%, #E8B4BC 100%);
+        background-size: 200% auto;
+        -webkit-background-clip: text; background-clip: text;
+        -webkit-text-fill-color: transparent;
+        animation: tmb-txt-shimmer 5s linear infinite reverse;
+        font-size: 0.55rem; letter-spacing: 0.28em;
+    }
+    @keyframes tmb-txt-shimmer {
+        0%   { background-position: 0% center; }
+        100% { background-position: 200% center; }
+    }
+    .tmb-dot { display: inline-block; width: 3px; height: 3px; border-radius: 50%;
+        background: #D4AF37; opacity: 0.7; margin: 0 0.2rem; vertical-align: middle; }
+    .tmb-flower { font-size: 0.7rem; -webkit-text-fill-color: initial;
+        background: none; animation: none; opacity: 0.6; }
     """)
-    msg = "✧ PARTY: AUGUST 24, 2026 ✧ LOCATION: EJE CAFETERO (COFFEE TRIANGLE) ✧ ADDRESS: FINCA HOTEL NUEVO FUTURO ✧"
-    
+
+    msg1 = "✧ AUGUST 24 · 2026 ✧ FINCA HOTEL NUEVO FUTURO ✧ EJE CAFETERO · COLOMBIA ✧ SAVE THE DATE ✧"
+    msg2 = "🌸 NIKOLAI & VALENTINA 🌸 WE'RE GETTING MARRIED 🌸 JOIN US FOR OUR SPECIAL DAY 🌸"
+
+    def _track(msg: str, scroll_cls: str, track_cls: str = "tmb-track") -> FT:
+        spans = [Span(msg, cls="tmb-item") for _ in range(6)]
+        return Div(Div(*spans, cls=scroll_cls), cls=track_cls)
+
     return Div(
-        anim_css,
-        Div(
-            Span(msg), Span(msg), Span(msg), Span(msg),
-            Span(msg), Span(msg), Span(msg), Span(msg),
-            cls="marquee-content",
-        ),
-        cls="marquee-container sticky top-0 w-full bg-[#5C4A5E] text-[#FADADD] font-sans text-[9px] md:text-[11px] tracking-[0.35em] uppercase py-2 md:py-2.5 z-[8900] shadow-[0_4px_20px_rgba(92,74,94,0.3)]",
+        css,
+        _track(msg1, "tmb-scroll-l"),
+        _track(msg2, "tmb-scroll-r", "tmb-track tmb-track-2"),
+    cls="tmb-wrap",
     )
 
 def InvitationQuoteSection() -> FT:
