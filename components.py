@@ -137,7 +137,7 @@ def BookOpeningOverlay(name: str | None = None) -> FT:
         Div(
             P(
                 greeting,
-                cls="font-sans text-[9px] uppercase tracking-[0.45em] text-[#A89090] mb-2 text-center",
+                cls="greeting-shimmer font-serif text-2xl md:text-3xl font-semibold mb-2 text-center tracking-wide animate__animated animate__fadeInDown",
             ),
             Div(
                 Div(
@@ -202,24 +202,24 @@ def BookOpeningOverlay(name: str | None = None) -> FT:
 
 CATEGORY_MESSAGES = {
     "Friends": (
-        "You're one of the people who makes life more fun and memorable — "
-        "we wouldn't have it any other way than celebrating this day with you! 🎉"
+        "Eres de esas personas que hacen la vida más alegre y especial. "
+        "No podríamos imaginar este día sin ti — ¡ven a celebrar con nosotros! 🎉"
     ),
     "Family": (
-        "With all our love and gratitude, we would be deeply honored "
-        "to have you celebrate this joyful milestone with us."
+        "Con todo el amor de nuestros corazones, sería un honor inmenso "
+        "tenerte a nuestro lado en este momento tan especial de nuestras vidas."
     ),
     "VIP": (
-        "It is with the greatest pleasure and heartfelt sincerity that "
-        "we request the honor of your presence on our wedding day."
+        "Es con el más profundo afecto y sincera gratitud que te pedimos "
+        "el honor de compartir contigo el día más importante de nuestras vidas."
     ),
     "Work": (
-        "We would be truly delighted to have you join us as we celebrate "
-        "the beginning of our new chapter together."
+        "Nos llena de alegría poder compartir este nuevo capítulo con personas "
+        "tan valiosas. Será un placer enorme tenerte presente en nuestra boda."
     ),
     "General": (
-        "We joyfully invite you to share in the celebration of our "
-        "wedding day and create beautiful memories together."
+        "Con mucha ilusión y el corazón abierto, te invitamos a celebrar "
+        "junto a nosotros el comienzo de nuestra vida juntos."
     ),
 }
 
@@ -249,6 +249,22 @@ CATEGORY_STYLES = {
 # ---------------------------------------------------------------------------
 # Shared decorative helpers
 # ---------------------------------------------------------------------------
+
+def _colombia_separator() -> FT:
+    """Animated tricolor separator — Colombia flag colors (yellow, blue, red)."""
+    return Div(
+        Div(
+            Span(cls="col-sep-line col-sep-yellow"),
+            Span("✦", cls="col-sep-diamond"),
+            Span("🌸", cls="col-sep-flower"),
+            Span("✦", cls="col-sep-diamond"),
+            Span(cls="col-sep-line col-sep-blue"),
+            Span("❋", cls="col-sep-diamond col-sep-mid"),
+            Span(cls="col-sep-line col-sep-red"),
+            cls="col-sep-inner",
+        ),
+        cls="col-sep scroll-reveal",
+    )
 
 def _ornament() -> FT:
     """Horizontal blush-rose ornamental divider."""
@@ -637,21 +653,6 @@ def InviteHero(name: str | None = None) -> FT:
                         cls="relative flex items-center justify-center lg:justify-start max-w-md mx-auto lg:mx-0 my-8 animate__animated animate__fadeIn animate__delay-2s",
                         style="transform: translateZ(40px);"
                     ),
-                    P(
-                        "Party: August 24, 2026",
-                        cls="font-serif text-xl text-[#5C4A4A] tracking-wide animate__animated animate__fadeInUp animate__delay-2s",
-                        style="transform: translateZ(25px);"
-                    ),
-                    P(
-                        "Location: Eje Cafetero (Coffee Triangle)",
-                        cls="font-sans text-[10px] uppercase tracking-[0.35em] text-[#A89090] mt-3 animate__animated animate__fadeInUp animate__delay-2s",
-                        style="transform: translateZ(15px);"
-                    ),
-                    P(
-                        "Address: Finca Hotel Nuevo Futuro",
-                        cls="font-sans text-[10px] uppercase tracking-[0.35em] text-[#A89090] mt-1 animate__animated animate__fadeInUp animate__delay-2s",
-                        style="transform: translateZ(15px);"
-                    ),
                     *([
                         Div(
                             P(f"for {name}", cls="font-serif italic text-[#C4687A]/50 text-base mt-6"),
@@ -925,10 +926,10 @@ def PersonalMessage(guest: dict) -> FT:
         Span('🌺', cls='side-petal-l'),
         Span('🌸', cls='side-petal-r'),
         Div(
-            Div(_ornament(), cls='scroll-reveal'),
+            _colombia_separator(),
             Div(cls="h-10"),
             P(
-                f"Dear {first_name},",
+                f"Querido/a {first_name},",
                 cls="font-serif text-2xl text-[#3A6A56] mb-5 scroll-reveal sr-d1",
             ),
             P(
@@ -936,7 +937,7 @@ def PersonalMessage(guest: dict) -> FT:
                 cls="font-serif italic text-xl md:text-2xl text-[#5A7A68] leading-relaxed scroll-reveal sr-d2",
             ),
             Div(cls="h-10"),
-            Div(_ornament(), cls='scroll-reveal sr-d3'),
+            _colombia_separator(),
             cls="max-w-2xl mx-auto text-center px-8 py-20 section-inner",
         ),
         cls="bg-transparent relative section-canvas",

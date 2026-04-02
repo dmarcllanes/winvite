@@ -26,6 +26,99 @@
   --mist-bg:     #F4F0FA;
 }
 
+/* ── Colombia Tricolor Animated Separator ───────────────── */
+@keyframes col-sep-slide {
+  0%   { transform: scaleX(0); opacity: 0; }
+  60%  { transform: scaleX(1.05); opacity: 1; }
+  100% { transform: scaleX(1); opacity: 1; }
+}
+
+@keyframes col-diamond-spin {
+  0%   { transform: rotate(0deg) scale(0.8); opacity: 0.5; }
+  50%  { transform: rotate(180deg) scale(1.2); opacity: 1; }
+  100% { transform: rotate(360deg) scale(0.8); opacity: 0.5; }
+}
+
+@keyframes col-flower-float {
+  0%, 100% { transform: translateY(0) scale(1);   opacity: 0.85; }
+  50%       { transform: translateY(-4px) scale(1.15); opacity: 1; }
+}
+
+.col-sep {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  margin: 0.5rem 0;
+  overflow: hidden;
+}
+
+.col-sep-inner {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: min(420px, 90%);
+}
+
+.col-sep-line {
+  flex: 1;
+  height: 3px;
+  border-radius: 2px;
+  transform-origin: center;
+  animation: col-sep-slide 0.9s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.col-sep-yellow { background: linear-gradient(90deg, #F5C518, #FFDE59, #F5C518); animation-delay: 0s; }
+.col-sep-blue   { background: linear-gradient(90deg, #003087, #0052CC, #003087); animation-delay: 0.15s; }
+.col-sep-red    { background: linear-gradient(90deg, #CC0001, #FF2020, #CC0001); animation-delay: 0.3s; }
+
+.col-sep-diamond {
+  font-size: 0.75rem;
+  color: var(--gold);
+  animation: col-diamond-spin 4s linear infinite;
+}
+
+.col-sep-mid {
+  font-size: 1rem;
+  color: #C4687A;
+  animation-duration: 3s;
+  animation-delay: 0.5s;
+}
+
+.col-sep-flower {
+  font-size: 1.1rem;
+  animation: col-flower-float 2.8s ease-in-out infinite;
+}
+
+/* ── Dear [Name] Shimmer Greeting ──────────────────────── */
+@keyframes greeting-shimmer {
+  0%   { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
+@keyframes greeting-glow {
+  0%, 100% { text-shadow: 0 0 8px rgba(155, 35, 53, 0.5), 0 0 20px rgba(184, 134, 11, 0.3); }
+  50%       { text-shadow: 0 0 18px rgba(155, 35, 53, 0.8), 0 0 40px rgba(184, 134, 11, 0.5); }
+}
+
+.greeting-shimmer {
+  background: linear-gradient(
+    90deg,
+    #9B2335 0%,
+    #B8860B 30%,
+    #DAA520 50%,
+    #B8860B 70%,
+    #9B2335 100%
+  );
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation:
+    greeting-shimmer 3s linear infinite,
+    greeting-glow    2.4s ease-in-out infinite;
+}
+
 /* ── Overlay Shell ──────────────────────────────────────── */
 #book-overlay {
   position: fixed;
