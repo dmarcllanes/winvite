@@ -97,18 +97,18 @@
 }
 
 @keyframes greeting-glow {
-  0%, 100% { text-shadow: 0 0 8px rgba(155, 35, 53, 0.5), 0 0 20px rgba(184, 134, 11, 0.3); }
-  50%       { text-shadow: 0 0 18px rgba(155, 35, 53, 0.8), 0 0 40px rgba(184, 134, 11, 0.5); }
+  0%, 100% { text-shadow: 0 0 8px rgba(212, 175, 55, 0.3), 0 0 20px rgba(196, 104, 122, 0.2); }
+  50%       { text-shadow: 0 0 16px rgba(212, 175, 55, 0.5), 0 0 36px rgba(196, 104, 122, 0.3); }
 }
 
 .greeting-shimmer {
   background: linear-gradient(
     90deg,
-    #9B2335 0%,
-    #B8860B 30%,
-    #DAA520 50%,
-    #B8860B 70%,
-    #9B2335 100%
+    #C4687A 0%,
+    #D4AF37 30%,
+    #E8C96A 50%,
+    #D4AF37 70%,
+    #C4687A 100%
   );
   background-size: 200% auto;
   -webkit-background-clip: text;

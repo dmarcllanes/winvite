@@ -202,22 +202,32 @@ def BookOpeningOverlay(name: str | None = None) -> FT:
 
 CATEGORY_MESSAGES = {
     "Friends": (
+        "You're one of the people who makes life more fun and memorable — "
+        "we wouldn't have it any other way than celebrating this day with you! 🎉",
         "Eres de esas personas que hacen la vida más alegre y especial. "
         "No podríamos imaginar este día sin ti — ¡ven a celebrar con nosotros! 🎉"
     ),
     "Family": (
+        "With all our love and gratitude, we would be deeply honored "
+        "to have you celebrate this joyful milestone with us.",
         "Con todo el amor de nuestros corazones, sería un honor inmenso "
         "tenerte a nuestro lado en este momento tan especial de nuestras vidas."
     ),
     "VIP": (
+        "It is with the greatest pleasure and heartfelt sincerity that "
+        "we request the honor of your presence on our wedding day.",
         "Es con el más profundo afecto y sincera gratitud que te pedimos "
         "el honor de compartir contigo el día más importante de nuestras vidas."
     ),
     "Work": (
+        "We would be truly delighted to have you join us as we celebrate "
+        "the beginning of our new chapter together.",
         "Nos llena de alegría poder compartir este nuevo capítulo con personas "
         "tan valiosas. Será un placer enorme tenerte presente en nuestra boda."
     ),
     "General": (
+        "We joyfully invite you to share in the celebration of our "
+        "wedding day and create beautiful memories together.",
         "Con mucha ilusión y el corazón abierto, te invitamos a celebrar "
         "junto a nosotros el comienzo de nuestra vida juntos."
     ),
@@ -918,7 +928,12 @@ def InviteDetails() -> FT:
 
 def PersonalMessage(guest: dict) -> FT:
     first_name = guest["name"].split()[0]
-    msg = guest.get("custom_message") or CATEGORY_MESSAGES.get(guest["category"], CATEGORY_MESSAGES["General"])
+    raw = guest.get("custom_message") or CATEGORY_MESSAGES.get(guest["category"], CATEGORY_MESSAGES["General"])
+    # raw is either a plain string (custom) or a (en, es) tuple
+    if isinstance(raw, tuple):
+        msg_en, msg_es = raw
+    else:
+        msg_en, msg_es = raw, None
     return Section(
         _section_petals(6, ['#A8DCC8','#7EC4AE','#C8F0E4','#B8E8D4','#F2C4CE']),
         Span('🌹', cls='floral-watermark', style='top:5%;left:-2%;--fw-size:10rem;--fw-op:0.04;--fw-dur:16s;--fw-delay:0s;'),
@@ -929,13 +944,27 @@ def PersonalMessage(guest: dict) -> FT:
             _colombia_separator(),
             Div(cls="h-10"),
             P(
-                f"Querido/a {first_name},",
-                cls="font-serif text-2xl text-[#3A6A56] mb-5 scroll-reveal sr-d1",
+                f"Dear {first_name},",
+                cls="font-serif text-2xl text-[#3A6A56] mb-4 scroll-reveal sr-d1",
             ),
             P(
-                f'"{msg}"',
+                f'"{msg_en}"',
                 cls="font-serif italic text-xl md:text-2xl text-[#5A7A68] leading-relaxed scroll-reveal sr-d2",
             ),
+            *([
+                Div(
+                    Span("— ✦ —", cls="text-[#D4AF37]/60 text-xs tracking-widest"),
+                    cls="my-5 scroll-reveal sr-d2",
+                ),
+                P(
+                    f"Querido/a {first_name},",
+                    cls="font-serif text-xl text-[#3A6A56]/80 mb-3 scroll-reveal sr-d3",
+                ),
+                P(
+                    f'"{msg_es}"',
+                    cls="font-serif italic text-lg md:text-xl text-[#5A7A68]/80 leading-relaxed scroll-reveal sr-d3",
+                ),
+            ] if msg_es else []),
             Div(cls="h-10"),
             _colombia_separator(),
             cls="max-w-2xl mx-auto text-center px-8 py-20 section-inner",
@@ -2109,14 +2138,18 @@ def MemoriesSection() -> FT:
         ("/static/images/memories/mem3.jpeg", "Together Always"),
         ("/static/images/memories/mem4.jpeg", "True Love"),
         ("/static/images/memories/mem5.jpeg", "Forever Yours"),
+        ("/static/images/memories/mem6.JPG",  "Just Us Two"),
+        ("/static/images/memories/mem7.JPG",  "With Love"),
     ]
     # Per-photo: (rotation, vertical-offset, stagger-delay)
     scatter = [
-        ("-6deg", "8px",  "0s"),
-        ( "4deg", "-6px", "0.15s"),
-        ("-2deg", "14px", "0.3s"),
-        ( "7deg", "-4px", "0.45s"),
-        ("-5deg", "10px", "0.6s"),
+        ("-6deg", "8px",   "0s"),
+        ( "4deg", "-6px",  "0.15s"),
+        ("-2deg", "14px",  "0.3s"),
+        ( "7deg", "-4px",  "0.45s"),
+        ("-5deg", "10px",  "0.6s"),
+        ( "3deg", "-8px",  "0.75s"),
+        ("-4deg", "12px",  "0.9s"),
     ]
     cells = [
         Div(
@@ -2582,20 +2615,25 @@ def InvitePage(guest: dict) -> FT:
 # ---------------------------------------------------------------------------
 
 def StatusBadge(status: str) -> FT:
-    style, icon = RSVP_STATUS_STYLES.get(status, RSVP_STATUS_STYLES["pending"])
-    return Span(
-        I(data_lucide=icon, cls="w-3 h-3 mr-1 inline"),
-        status.capitalize(),
-        cls=f"inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium {style}",
-    )
+    configs = {
+        "attending": ("✓ Attending", "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200"),
+        "declined":  ("✗ Declined",  "bg-rose-50 text-rose-600 ring-1 ring-rose-200"),
+        "pending":   ("⏳ Pending",   "bg-amber-50 text-amber-700 ring-1 ring-amber-200"),
+    }
+    label, cls = configs.get(status, configs["pending"])
+    return Span(label, cls=f"inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-semibold {cls}")
 
 
 def CategoryBadge(category: str) -> FT:
-    style = CATEGORY_STYLES.get(category, CATEGORY_STYLES["General"])
-    return Span(
-        category,
-        cls=f"inline-flex px-2 py-0.5 rounded-full text-xs font-medium {style}",
-    )
+    configs = {
+        "Friends": ("bg-violet-50 text-violet-700 ring-1 ring-violet-200"),
+        "Family":  ("bg-amber-50 text-amber-700 ring-1 ring-amber-200"),
+        "VIP":     ("bg-yellow-50 text-yellow-800 ring-1 ring-yellow-300"),
+        "Work":    ("bg-sky-50 text-sky-700 ring-1 ring-sky-200"),
+        "General": ("bg-stone-100 text-stone-600 ring-1 ring-stone-200"),
+    }
+    cls = configs.get(category, configs["General"])
+    return Span(category, cls=f"inline-flex px-2.5 py-1 rounded-full text-[11px] font-semibold {cls}")
 
 
 def WhatsAppButton(guest: dict) -> FT:
@@ -2713,41 +2751,49 @@ def _icon_btn(icon: str, title: str, cls_extra: str, **attrs) -> FT:
     )
 
 
+def _guest_avatar(name: str) -> FT:
+    initials = "".join(w[0].upper() for w in name.split()[:2])
+    return Div(
+        initials,
+        cls=(
+            "w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 "
+            "bg-gradient-to-br from-[#D4AF37] to-[#C4687A] "
+            "text-white text-xs font-bold shadow-sm"
+        ),
+    )
+
+
 def AdminRow(guest: dict) -> FT:
     slug = guest["slug"]
 
     actions = Div(
-        # Preview — opens invite in new tab
         A(
             I(data_lucide="eye", cls="w-3.5 h-3.5"),
             href=f"/invite/{slug}",
             target="_blank",
-            title="Preview invite",
+            title="Preview",
             cls=(
-                "inline-flex items-center justify-center w-7 h-7 rounded-lg "
-                "bg-[#FDF8F5] text-[#B09090] hover:bg-[#F5EEEA] transition-colors"
+                "inline-flex items-center justify-center w-8 h-8 rounded-lg "
+                "bg-stone-100 text-stone-500 hover:bg-stone-200 transition-colors"
             ),
         ),
-        # Share — expands platform panel below row
         _icon_btn(
             "share-2", "Share invite link",
-            "bg-[#D4AF37]/10 text-[#B8960C] hover:bg-[#D4AF37]/20",
+            "bg-amber-50 text-amber-600 hover:bg-amber-100",
             hx_get=f"/admin/guests/{slug}/share",
             hx_target="closest tr",
             hx_swap="outerHTML",
         ),
-        # Edit — swap row with edit form
         _icon_btn(
             "pencil", "Edit guest",
-            "bg-[#D4AF37]/10 text-[#B8960C] hover:bg-[#D4AF37]/25",
+            "bg-sky-50 text-sky-600 hover:bg-sky-100",
             hx_get=f"/admin/guests/{slug}/edit-form",
             hx_target="closest tr",
             hx_swap="outerHTML",
         ),
-        # Delete
         _icon_btn(
             "trash-2", "Delete guest",
-            "bg-[#F2C4CE]/40 text-[#C4687A] hover:bg-[#F2C4CE]/70",
+            "bg-rose-50 text-rose-500 hover:bg-rose-100",
             hx_delete=f"/admin/guests/{slug}",
             hx_target="closest tr",
             hx_swap="outerHTML swap:300ms",
@@ -2759,25 +2805,35 @@ def AdminRow(guest: dict) -> FT:
     has_custom = bool(guest.get("custom_message"))
     return Tr(
         Td(
-            P(guest["name"], cls="font-medium text-[#5C4A4A] text-sm"),
-            P(guest.get("phone", "—"), cls="text-xs text-[#C0A8A8] mt-0.5"),
-            cls="px-4 py-3",
+            Div(
+                _guest_avatar(guest["name"]),
+                Div(
+                    P(guest["name"], cls="font-semibold text-[#3D2E2E] text-sm leading-tight"),
+                    P(guest.get("phone") or "—", cls="text-[11px] text-[#B09090] mt-0.5 font-mono"),
+                    cls="min-w-0",
+                ),
+                cls="flex items-center gap-3",
+            ),
+            cls="px-5 py-3.5",
         ),
         Td(
-            CategoryBadge(guest["category"]),
-            Span("✎ custom msg", cls="ml-2 text-[10px] text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded-full") if has_custom else "",
-            cls="px-4 py-3",
+            Div(
+                CategoryBadge(guest["category"]),
+                Span("✎ custom", cls="text-[10px] text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded-full ring-1 ring-amber-200") if has_custom else "",
+                cls="flex flex-wrap gap-1.5 items-center",
+            ),
+            cls="px-5 py-3.5",
         ),
-        Td(StatusBadge(guest["rsvp_status"]), cls="px-4 py-3"),
+        Td(StatusBadge(guest["rsvp_status"]), cls="px-5 py-3.5"),
         Td(
-            "✓" if guest["plus_one"] else "—",
-            cls="px-4 py-3 text-sm text-[#B09090] text-center",
+            Span("✓", cls="text-emerald-500 font-bold text-sm") if guest["plus_one"] else Span("—", cls="text-stone-300 text-sm"),
+            cls="px-5 py-3.5 text-center",
         ),
-        Td(OpenedAt(guest.get("opened_at")), cls="px-4 py-3"),
-        Td(actions, cls="px-4 py-3"),
+        Td(OpenedAt(guest.get("opened_at")), cls="px-5 py-3.5"),
+        Td(actions, cls="px-5 py-3.5"),
         id=f"guest-row-{slug}",
         data_rsvp=guest["rsvp_status"],
-        cls="border-b border-[#F0E8E4] hover:bg-[#FEF6F3] transition-colors",
+        cls="border-b border-[#F5EDE8] hover:bg-[#FEFAF8] transition-colors group",
     )
 
 
@@ -2788,10 +2844,12 @@ def EditGuestRow(guest: dict) -> FT:
         "focus:outline-none focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37]"
     )
     select_cls = input_cls + " bg-white"
-    category_default = CATEGORY_MESSAGES.get(guest["category"], CATEGORY_MESSAGES["General"])
+    _raw_default = CATEGORY_MESSAGES.get(guest["category"], CATEGORY_MESSAGES["General"])
+    category_default = " / ".join(_raw_default) if isinstance(_raw_default, tuple) else _raw_default
     # Build JS map of all category defaults for live textarea update
+    _flat = {k: (" / ".join(v) if isinstance(v, tuple) else v) for k, v in CATEGORY_MESSAGES.items()}
     cat_map_js = "{" + ",".join(
-        f'"{k}": {repr(v)}' for k, v in CATEGORY_MESSAGES.items()
+        f'"{k}": {repr(v)}' for k, v in _flat.items()
     ) + "}"
     textarea_id = f"msg-{slug}"
     select_id   = f"cat-{slug}"
@@ -2967,11 +3025,11 @@ def GuestTable(guests: list[dict]) -> FT:
 
     # Filter tabs
     filter_tabs = Div(
-        Button("All", onclick="filterGuests('all')",   id="tab-all",      cls="tab-btn tab-active"),
-        Button("✓ Attending", onclick="filterGuests('attending')", id="tab-attending", cls="tab-btn"),
-        Button("✗ Declined",  onclick="filterGuests('declined')",  id="tab-declined",  cls="tab-btn"),
-        Button("⏳ Pending",   onclick="filterGuests('pending')",   id="tab-pending",   cls="tab-btn"),
-        cls="flex gap-2 mb-4 flex-wrap",
+        Button("All",          onclick="filterGuests('all')",       id="tab-all",       cls="tab-btn tab-active"),
+        Button("✓ Attending",  onclick="filterGuests('attending')", id="tab-attending", cls="tab-btn"),
+        Button("✗ Declined",   onclick="filterGuests('declined')",  id="tab-declined",  cls="tab-btn"),
+        Button("⏳ Pending",    onclick="filterGuests('pending')",   id="tab-pending",   cls="tab-btn"),
+        cls="flex gap-2 mb-5 flex-wrap",
     )
 
     filter_js = Script("""
@@ -2988,12 +3046,17 @@ function filterGuests(status) {
 
     tab_css = Style("""
 .tab-btn {
-    padding: .4rem 1rem; border-radius: .65rem; border: 1.5px solid #E8D8D0;
-    background: white; color: #A89090; font-size: .75rem; font-family: sans-serif;
-    cursor: pointer; transition: all .15s;
+    padding: .45rem 1.1rem; border-radius: 2rem; border: 1.5px solid #E8D8D0;
+    background: white; color: #A89090; font-size: .72rem; font-family: sans-serif;
+    font-weight: 600; letter-spacing: .03em;
+    cursor: pointer; transition: all .18s;
 }
-.tab-btn:hover { background: #FAF3F0; }
-.tab-btn.tab-active { background: #5C4A4A; color: white; border-color: #5C4A4A; }
+.tab-btn:hover { background: #FAF3F0; border-color: #D4AF37; color: #8C6A2A; }
+.tab-btn.tab-active {
+    background: linear-gradient(135deg,#D4AF37,#C4687A);
+    color: white; border-color: transparent;
+    box-shadow: 0 2px 10px rgba(212,175,55,.35);
+}
 """)
 
     return Div(
@@ -3001,10 +3064,10 @@ function filterGuests(status) {
         filter_js,
         # Stats bar
         Div(
-            _stat("Users", str(len(guests)), "Total Guests"),
-            _stat("CheckCircle", str(attending), "Attending"),
-            _stat("Clock", str(pending), "Pending"),
-            _stat("XCircle", str(declined), "Declined"),
+            _stat("users",        str(len(guests)), "Total Guests", "#D4AF37", "#FFFBF0"),
+            _stat("check-circle", str(attending),   "Attending",    "#16A34A", "#F0FDF4"),
+            _stat("clock",        str(pending),     "Pending",      "#D97706", "#FFFBEB"),
+            _stat("x-circle",     str(declined),    "Declined",     "#DC2626", "#FFF1F2"),
             cls="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6",
         ),
         filter_tabs,
@@ -3014,69 +3077,75 @@ function filterGuests(status) {
                 Thead(
                     Tr(
                         *[
-                            Th(h, cls="px-4 py-3 text-left text-xs font-semibold text-[#B09090] uppercase tracking-wider")
+                            Th(h, cls="px-5 py-4 text-left text-[10px] font-bold text-[#A89090] uppercase tracking-widest")
                             for h in ["Guest", "Category", "RSVP", "+1", "Opened", "Actions"]
                         ],
-                        cls="bg-[#FAF3F0] border-b border-[#E8D8D0]",
+                        cls="bg-gradient-to-r from-[#FAF3F0] to-[#FDF8F5] border-b-2 border-[#EDE5DF]",
                     )
                 ),
                 Tbody(*rows, id="guest-table"),
                 cls="w-full",
             ),
-            cls="overflow-x-auto rounded-xl border border-[#E8D8D0] bg-white shadow-[0_2px_12px_rgba(92,74,74,0.06)]",
+            cls="overflow-x-auto rounded-2xl border border-[#EDE5DF] bg-white shadow-[0_4px_24px_rgba(92,74,74,0.08)]",
         ),
     )
 
 
-def _stat(icon: str, value: str, label: str) -> FT:
+def _stat(icon: str, value: str, label: str, accent: str = "#D4AF37", bg: str = "#FFFBF0") -> FT:
     return Div(
         Div(
-            I(data_lucide=icon, cls="w-5 h-5 text-[#D4AF37]"),
-            cls="mb-2",
+            Div(
+                I(data_lucide=icon, cls="w-5 h-5"),
+                cls=f"w-10 h-10 rounded-xl flex items-center justify-center",
+                style=f"background:{bg};color:{accent};",
+            ),
+            P(value, cls="font-serif text-3xl font-bold text-[#3D2E2E] mt-3"),
+            P(label, cls="text-[11px] text-[#B09090] uppercase tracking-widest mt-0.5 font-medium"),
+            cls="flex flex-col",
         ),
-        P(value, cls="font-serif text-3xl text-[#5C4A4A]"),
-        P(label, cls="text-xs text-[#B09090] uppercase tracking-wider mt-0.5"),
-        cls="bg-white rounded-xl border border-[#E8D8D0] px-5 py-4 shadow-[0_2px_12px_rgba(92,74,74,0.06)]",
+        cls="bg-white rounded-2xl border border-[#EDE5DF] px-5 py-5 shadow-[0_4px_20px_rgba(92,74,74,0.07)] hover:shadow-[0_6px_24px_rgba(92,74,74,0.11)] transition-shadow",
     )
 
 
 def AddGuestForm() -> FT:
+    field_cls = (
+        "w-full px-4 py-2.5 rounded-xl border border-[#E8D8D0] text-[#5C4A4A] text-sm bg-[#FDFAF8] "
+        "focus:outline-none focus:border-[#D4AF37] focus:ring-2 focus:ring-[#D4AF37]/20 transition-all"
+    )
     return Form(
         Div(
-            Input(
-                type="text", name="name", placeholder="Full Name",
-                required=True,
-                cls=(
-                    "w-full px-4 py-2.5 rounded-lg border border-[#E8D8D0] text-[#5C4A4A] text-sm"
-                    "focus:outline-none focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37] "
-                    "transition-colors"
-                ),
+            Div(
+                Input(type="text", name="name", placeholder="Full Name", required=True, cls=field_cls),
+                cls="flex-1 min-w-[160px]",
             ),
-            Input(type="hidden", name="phone", value=""),
-            Select(
-                Option("General", value="General"),
-                Option("Family",  value="Family"),
-                Option("Friends", value="Friends"),
-                Option("VIP",     value="VIP"),
-                Option("Work",    value="Work"),
-                name="category",
-                cls=(
-                    "w-full px-4 py-2.5 rounded-lg border border-[#E8D8D0] text-[#5C4A4A] text-sm"
-                    "focus:outline-none focus:border-[#D4AF37] bg-white "
-                    "transition-colors"
+            Div(
+                Input(type="tel", name="phone", placeholder="Phone (optional)", cls=field_cls),
+                cls="flex-1 min-w-[160px]",
+            ),
+            Div(
+                Select(
+                    Option("General", value="General"),
+                    Option("Family",  value="Family"),
+                    Option("Friends", value="Friends"),
+                    Option("VIP",     value="VIP"),
+                    Option("Work",    value="Work"),
+                    name="category",
+                    cls=field_cls + " bg-[#FDFAF8] cursor-pointer",
                 ),
+                cls="min-w-[140px]",
             ),
             Button(
                 I(data_lucide="user-plus", cls="w-4 h-4 mr-2"),
                 "Add Guest",
                 type="submit",
                 cls=(
-                    "inline-flex items-center px-5 py-2.5 bg-[#D4AF37] text-[#0A0A0A] "
-                    "rounded-lg text-sm font-semibold hover:bg-amber-400 "
-                    "transition-colors active:scale-95"
+                    "inline-flex items-center px-6 py-2.5 rounded-xl text-sm font-bold "
+                    "text-white transition-all active:scale-95 whitespace-nowrap "
+                    "shadow-[0_4px_14px_rgba(212,175,55,0.4)] hover:shadow-[0_6px_20px_rgba(212,175,55,0.5)]"
                 ),
+                style="background:linear-gradient(135deg,#D4AF37,#C4A028);",
             ),
-            cls="flex flex-wrap gap-3 items-end",
+            cls="flex flex-wrap gap-3 items-center",
         ),
         hx_post="/admin/guests",
         hx_target="#guest-table",
@@ -3201,49 +3270,82 @@ def AdminPage(guests: list[dict], reservations: list[dict] = None, songs: list[d
     return (
         Title("Admin · Winvite"),
         Main(
-            # Header
+            # ── Top hero banner ──
             Div(
                 Div(
-                    H1("Admin Dashboard", cls="font-serif text-3xl text-[#5C4A4A]"),
-                    P("Manage your guest list and send personalized invitations.",
-                      cls="text-sm text-[#B09090] mt-1"),
-                    cls="flex-1",
+                    Div(
+                        Span("✦", cls="text-[#D4AF37] text-lg mr-3 opacity-70"),
+                        Span("WINVITE", cls="font-sans text-[10px] tracking-[0.5em] text-[#D4AF37]/80 font-semibold uppercase"),
+                        Span("✦", cls="text-[#D4AF37] text-lg ml-3 opacity-70"),
+                        cls="flex items-center justify-center mb-3",
+                    ),
+                    H1("Admin Dashboard",
+                       cls="font-serif text-4xl md:text-5xl text-white text-center mb-2",
+                       style="text-shadow:0 2px 20px rgba(0,0,0,0.2)"),
+                    P("Manage guests · Send invitations · Track RSVPs",
+                      cls="text-center text-white/60 text-sm font-sans tracking-wide"),
+                    cls="max-w-5xl mx-auto px-6 py-12",
                 ),
-                Div(I(data_lucide="heart", cls="w-8 h-8 text-[#D4AF37]"), cls="flex items-center"),
-                cls="flex items-start justify-between mb-8",
+                style=(
+                    "background:linear-gradient(135deg,#3D2E2E 0%,#5C4A4A 40%,#6B3A4A 100%);"
+                    "box-shadow:0 8px 40px rgba(92,74,74,0.25);"
+                ),
             ),
-            # Add guest
+            # ── Content ──
             Div(
-                H2("Add Guest", cls="text-sm font-semibold text-[#B09090] uppercase tracking-wider mb-3"),
-                AddGuestForm(),
-                cls="bg-white border border-[#E8D8D0] rounded-xl p-5 mb-8 shadow-[0_2px_12px_rgba(92,74,74,0.06)]",
-            ),
-            # Guest table
-            GuestTable(guests),
-            # Reservations
-            Div(
+                # Add guest card
                 Div(
-                    I(data_lucide="calendar-check", cls="w-5 h-5 text-[#D4AF37] mr-2"),
-                    H2(f"Reservation Responses ({len(reservations)})",
-                       cls="text-base font-semibold text-[#5C4A4A]"),
-                    cls="flex items-center mb-4",
+                    Div(
+                        Div(
+                            I(data_lucide="user-plus", cls="w-4 h-4 text-[#D4AF37] mr-2"),
+                            H2("Add New Guest", cls="text-sm font-bold text-[#5C4A4A] uppercase tracking-wider"),
+                            cls="flex items-center",
+                        ),
+                    ),
+                    Div(cls="h-3"),
+                    AddGuestForm(),
+                    cls=(
+                        "bg-white rounded-2xl border border-[#EDE5DF] px-6 py-5 mb-8 "
+                        "shadow-[0_4px_24px_rgba(92,74,74,0.08)]"
+                    ),
                 ),
-                ReservationsPanel(reservations),
-                cls="mt-10",
-            ),
-            # Song requests
-            Div(
+                # Guest table
+                GuestTable(guests),
+                # Reservations
                 Div(
-                    I(data_lucide="music", cls="w-5 h-5 text-[#D4AF37] mr-2"),
-                    H2(f"Song Requests ({len(songs)})",
-                       cls="text-base font-semibold text-[#5C4A4A]"),
-                    cls="flex items-center mb-4",
+                    Div(
+                        Div(
+                            I(data_lucide="calendar-check", cls="w-5 h-5 text-[#D4AF37] mr-2.5"),
+                            H2(f"Reservation Responses",
+                               cls="text-base font-bold text-[#5C4A4A]"),
+                            Span(str(len(reservations)),
+                                 cls="ml-auto text-xs font-bold text-white bg-[#D4AF37] px-2.5 py-0.5 rounded-full"),
+                            cls="flex items-center",
+                        ),
+                        cls="mb-5",
+                    ),
+                    ReservationsPanel(reservations),
+                    cls="mt-10 bg-white rounded-2xl border border-[#EDE5DF] px-6 py-5 shadow-[0_4px_24px_rgba(92,74,74,0.08)]",
                 ),
-                SongRequestsPanel(songs),
-                cls="mt-10 mb-16",
+                # Song requests
+                Div(
+                    Div(
+                        Div(
+                            I(data_lucide="music", cls="w-5 h-5 text-[#D4AF37] mr-2.5"),
+                            H2(f"Song Requests",
+                               cls="text-base font-bold text-[#5C4A4A]"),
+                            Span(str(len(songs)),
+                                 cls="ml-auto text-xs font-bold text-white bg-[#C4687A] px-2.5 py-0.5 rounded-full"),
+                            cls="flex items-center",
+                        ),
+                        cls="mb-5",
+                    ),
+                    SongRequestsPanel(songs),
+                    cls="mt-6 mb-16 bg-white rounded-2xl border border-[#EDE5DF] px-6 py-5 shadow-[0_4px_24px_rgba(92,74,74,0.08)]",
+                ),
+                cls="max-w-5xl mx-auto px-4 py-8",
             ),
-            cls="max-w-5xl mx-auto px-4 py-10",
-            style="background:#FDF8F5;min-height:100vh;",
+            style="background:#F8F4F1;min-height:100vh;",
         ),
         Script("lucide.createIcons();"),
     )
