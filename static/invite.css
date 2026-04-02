@@ -1002,71 +1002,24 @@
   border-color: rgba(144,112,192,0.5);
 }
 
-/* ── Flower Petal Button System ──────────────────────────── */
-/*
-   True 6-petal flower: 3 pill shapes overlapping at 0°, 60°, 120°.
-   Each pill contributes 2 petals (one at each rounded end).
-   The button text sits in the centre above all petals.
-*/
-@keyframes petal-breathe {
-  0%,100% { opacity: 0.62; transform: rotate(var(--pr)) scale(1);   }
-  50%      { opacity: 0.82; transform: rotate(var(--pr)) scale(1.04); }
-}
-@keyframes btn-center-glow {
+/* ── Google Calendar CTA ────────────────────────────────── */
+@keyframes gcal-glow {
   0%,100% { box-shadow: 0 4px 18px rgba(144,112,192,0.30), 0 2px 8px rgba(0,0,0,0.08); }
   50%      { box-shadow: 0 8px 32px rgba(144,112,192,0.55), 0 4px 14px rgba(0,0,0,0.10); }
 }
-@keyframes btn-center-glow-rose {
+@keyframes btn-glow-rose {
   0%,100% { box-shadow: 0 4px 18px rgba(196,104,122,0.30), 0 2px 8px rgba(0,0,0,0.08); }
   50%      { box-shadow: 0 8px 32px rgba(196,104,122,0.55), 0 4px 14px rgba(0,0,0,0.10); }
 }
 
-/* Wrapper — provides room for petals to extend outside */
-.flower-btn-wrap {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 1.1rem 1.2rem;
-}
-
-/* Petal layer 2 (60°) and Petal layer 3 (120°) */
-.flower-btn-wrap::before,
-.flower-btn-wrap::after {
-  content: '';
-  position: absolute;
-  width: var(--fpw, 200px);
-  height: var(--fph, 48px);
-  border-radius: 999px;
-  pointer-events: none;
-  animation: petal-breathe 3s ease-in-out infinite;
-}
-.flower-btn-wrap::before { --pr: 60deg;  transform: rotate(60deg);  animation-delay: 0.4s; }
-.flower-btn-wrap::after  { --pr: 120deg; transform: rotate(120deg); animation-delay: 0.8s; }
-
-/* Gcal: lavender → rose petals */
-.flower-btn-wrap-gcal::before,
-.flower-btn-wrap-gcal::after {
-  background: linear-gradient(135deg, #9070C0 0%, #C4687A 100%);
-}
-
-/* Rose: rose → blush petals */
-.flower-btn-wrap-rose::before,
-.flower-btn-wrap-rose::after {
-  background: linear-gradient(135deg, #C4687A 0%, #D47896 100%);
-}
-
-/* ── Google Calendar CTA (petal layer 1 = the actual <a>) ── */
 .std-gcal-btn {
-  position: relative;
-  z-index: 2;
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.85rem 1.9rem;
+  padding: 0.9rem 2rem;
   background: linear-gradient(135deg, #9070C0 0%, #C4687A 100%);
   color: #fff;
-  border-radius: 999px;
+  border-radius: 3rem;
   font-family: 'Inter', sans-serif;
   font-size: 0.72rem;
   font-weight: 600;
@@ -1074,9 +1027,10 @@
   letter-spacing: 0.18em;
   text-decoration: none;
   white-space: nowrap;
-  animation: btn-center-glow 3s ease-in-out infinite;
-  transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
+  position: relative;
   overflow: hidden;
+  animation: gcal-glow 3s ease-in-out infinite;
+  transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
 }
 .std-gcal-btn::after {
   content: '';
@@ -1086,8 +1040,9 @@
   background-size: 200% 100%;
   animation: shimmer 2.8s ease-in-out infinite;
   border-radius: inherit;
+  pointer-events: none;
 }
-.std-gcal-btn:hover { transform: scale(1.06); }
+.std-gcal-btn:hover { transform: translateY(-2px) scale(1.04); }
 
 /* Responsive */
 @media (max-width: 640px) {

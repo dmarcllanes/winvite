@@ -986,16 +986,11 @@ def InviteDetails() -> FT:
 
             # ── Google Calendar CTA ────────────────────────────────────
             Div(
-                Div(
-                    A(
-                        I(data_lucide="calendar-plus", cls="w-5 h-5 mr-2 flex-shrink-0"),
-                        Span("Add to Google Calendar"),
-                        href=gcal_url, target="_blank", rel="noopener noreferrer",
-                        cls="std-gcal-btn",
-                        style="--fpw:220px;--fph:48px;",
-                    ),
-                    cls="flower-btn-wrap flower-btn-wrap-gcal scroll-reveal sr-d6",
-                    style="--fpw:220px;--fph:48px;",
+                A(
+                    I(data_lucide="calendar-plus", cls="w-5 h-5 mr-2 flex-shrink-0"),
+                    Span("Add to Google Calendar"),
+                    href=gcal_url, target="_blank", rel="noopener noreferrer",
+                    cls="std-gcal-btn scroll-reveal sr-d6",
                 ),
                 cls="flex justify-center mt-10 mb-2",
             ),
@@ -1232,18 +1227,18 @@ def AttendanceSection(guest: dict) -> FT:
 .att-field textarea{resize:none;}
 .att-actions{display:flex;gap:.5rem;padding:.5rem 1.5rem 1.5rem;align-items:center;justify-content:center;flex-wrap:wrap;}
 .att-btn-next,.att-btn-submit{
-  padding:.82rem 1.8rem;border:none;cursor:pointer;
+  flex:1;padding:.85rem;border-radius:3rem;border:none;cursor:pointer;
   background:linear-gradient(135deg,#C4687A,#D47896);color:white;
   font-family:sans-serif;font-size:.82rem;text-transform:uppercase;letter-spacing:.2em;
-  border-radius:999px;
-  animation:btn-center-glow-rose 3s ease-in-out infinite;
+  animation:btn-glow-rose 3s ease-in-out infinite;
   transition:transform .18s cubic-bezier(0.34,1.56,0.64,1);
-  touch-action:manipulation;position:relative;z-index:2;overflow:hidden;white-space:nowrap;}
+  touch-action:manipulation;position:relative;overflow:hidden;}
 .att-btn-next::after,.att-btn-submit::after{
   content:'';position:absolute;inset:0;border-radius:inherit;
   background:linear-gradient(90deg,transparent,rgba(255,255,255,.18),transparent);
-  background-size:200% 100%;animation:shimmer 2.8s ease-in-out infinite;}
-.att-btn-next:active,.att-btn-submit:active{transform:scale(.96);}
+  background-size:200% 100%;animation:shimmer 2.8s ease-in-out infinite;
+  pointer-events:none;}
+.att-btn-next:active,.att-btn-submit:active{transform:scale(.97);}
 .att-btn-back{
   padding:.85rem 1.1rem;border-radius:.85rem;border:1.5px solid #E8D8EC;
   background:white;color:#A89090;font-family:sans-serif;font-size:.82rem;
@@ -1256,11 +1251,9 @@ def AttendanceSection(guest: dict) -> FT:
   if(!bd) return;
   var STEPS = bd.querySelectorAll('.att-step');
   var DOTS  = bd.querySelectorAll('.att-dot');
-  var btnNext      = bd.querySelector('.att-btn-next');
-  var btnSubmit    = bd.querySelector('.att-btn-submit');
-  var btnNextWrap  = bd.querySelector('#att-submit-wrap') ? bd.querySelector('.flower-btn-wrap-rose:not(#att-submit-wrap)') : null;
-  var btnSubmitWrap= bd.querySelector('#att-submit-wrap');
-  var btnBack      = bd.querySelector('.att-btn-back');
+  var btnNext   = bd.querySelector('.att-btn-next');
+  var btnSubmit = bd.querySelector('.att-btn-submit');
+  var btnBack   = bd.querySelector('.att-btn-back');
   var cur = 0;
 
   function isDeclined(){
@@ -1288,17 +1281,14 @@ def AttendanceSection(guest: dict) -> FT:
       else if(i===n) d.classList.add('active');
     });
     // On step 0 with declined: show Submit immediately, hide Next
-    var showSubmit, showNext;
     if(n === 0 && isDeclined()){
-      showNext = false; showSubmit = true;
+      btnNext.style.display   = 'none';
+      btnSubmit.style.display = '';
     } else {
       var isLast = (n === STEPS.length-1);
-      showNext = !isLast; showSubmit = isLast;
+      btnNext.style.display   = isLast ? 'none' : '';
+      btnSubmit.style.display = isLast ? '' : 'none';
     }
-    if(btnNextWrap)   btnNextWrap.style.display   = showNext   ? '' : 'none';
-    if(btnSubmitWrap) btnSubmitWrap.style.display  = showSubmit ? '' : 'none';
-    btnNext.style.display   = showNext   ? '' : 'none';
-    btnSubmit.style.display = showSubmit ? '' : 'none';
     btnBack.style.display = (n===0) ? 'none' : '';
   }
 
@@ -1429,17 +1419,8 @@ def AttendanceSection(guest: dict) -> FT:
             form,
             Div(
                 Button("← Back", cls="att-btn-back", type="button", style="display:none;"),
-                Div(
-                    Button("Next →", cls="att-btn-next", type="button"),
-                    cls="flower-btn-wrap flower-btn-wrap-rose",
-                    style="--fpw:160px;--fph:44px;",
-                ),
-                Div(
-                    Button("Confirm My Attendance ✓", cls="att-btn-submit", type="submit", form="att-form"),
-                    cls="flower-btn-wrap flower-btn-wrap-rose",
-                    style="--fpw:230px;--fph:44px;display:none;",
-                    id="att-submit-wrap",
-                ),
+                Button("Next →", cls="att-btn-next", type="button"),
+                Button("Confirm My Attendance ✓", cls="att-btn-submit", type="submit", form="att-form", style="display:none;"),
                 cls="att-actions",
             ),
             id="att-sheet", style="position:relative;",
