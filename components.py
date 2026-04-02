@@ -1190,6 +1190,8 @@ def AttendanceSection(guest: dict) -> FT:
   background:rgba(20,10,30,0.55);backdrop-filter:blur(10px);
   display:flex;align-items:flex-end;justify-content:center;
   opacity:0;pointer-events:none;transition:opacity 0.3s ease;
+  /* allow the backdrop itself to scroll on very small viewports */
+  overflow-y:auto;padding:0;
 }
 #att-backdrop.att-open { opacity:1;pointer-events:all; }
 #att-sheet {
@@ -1199,13 +1201,32 @@ def AttendanceSection(guest: dict) -> FT:
   box-shadow:0 -20px 60px rgba(120,80,120,0.18);
   transform:translateY(100%);
   transition:transform 0.38s cubic-bezier(.34,1.56,.64,1);
-  max-height:92vh;overflow-y:auto;overscroll-behavior:contain;
+  /* always scrollable, sized to viewport */
+  max-height:92dvh;
+  overflow-y:auto;
+  overscroll-behavior:contain;
+  -webkit-overflow-scrolling:touch;
+  flex-shrink:0;
 }
 #att-backdrop.att-open #att-sheet { transform:translateY(0); }
+
+/* Desktop: centred dialog, never taller than viewport */
 @media(min-width:600px){
-  #att-backdrop{align-items:center;}
-  #att-sheet{border-radius:1.75rem;max-height:88vh;transform:scale(0.9) translateY(20px);}
-  #att-backdrop.att-open #att-sheet{transform:scale(1) translateY(0);}
+  #att-backdrop {
+    align-items:center;
+    padding:1.5rem;
+  }
+  #att-sheet {
+    border-radius:1.75rem;
+    max-height:min(90dvh, 680px);
+    width:100%;
+    max-width:520px;
+    transform:scale(0.94) translateY(16px);
+    overflow-y:auto;
+  }
+  #att-backdrop.att-open #att-sheet {
+    transform:scale(1) translateY(0);
+  }
 }
 .att-handle{width:40px;height:4px;background:#DDD;border-radius:2px;margin:.8rem auto 0;display:block;}
 .att-dots{display:flex;gap:.45rem;justify-content:center;margin:.75rem 0 .25rem;}
