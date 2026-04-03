@@ -1,6 +1,8 @@
 from fasthtml.common import *
 from starlette.staticfiles import StaticFiles
+from starlette.responses import StreamingResponse
 from dotenv import load_dotenv
+import io, openpyxl
 
 from db import (init_db, get_guest, mark_opened, update_rsvp, get_all_guests,
                 add_guest, delete_guest, update_guest,
@@ -287,6 +289,84 @@ def get(slug: str):
 def delete(slug: str):
     delete_guest(slug)
     return Response(status_code=200)
+
+
+# ---------------------------------------------------------------------------
+# Excel export endpoints
+# ---------------------------------------------------------------------------
+
+def _excel_response(wb: openpyxl.Workbook, filename: str) -> StreamingResponse:
+    buf = io.BytesIO()
+    wb.save(buf)
+    buf.seek(0)
+    return StreamingResponse(
+        buf,
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
+
+
+@rt("/admin/export/guests")
+def get():
+    guests = get_all_guests()
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Guests"
+    ws.append(["Name", "Phone", "Category", "RSVP Status", "Plus One", "Opened At", "Slug"])
+    for g in guests:
+        opened = g.get("opened_at")
+        if hasattr(opened, "strftime"):
+            opened = opened.strftime("%Y-%m-%d %H:%M")
+        ws.append([
+            g.get("name", ""),
+            g.get("phone", ""),
+            g.get("category", ""),
+            g.get("rsvp_status", "pending"),
+            "Yes" if g.get("plus_one") else "No",
+            opened or "",
+            g.get("slug", ""),
+        ])
+    return _excel_response(wb, "guests.xlsx")
+
+
+@rt("/admin/export/reservations")
+def get():
+    reservations = get_reservations()
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Reservations"
+    ws.append(["Name", "Category", "RSVP Status", "Seats", "Dietary", "Notes"])
+    for r in reservations:
+        ws.append([
+            r.get("name", ""),
+            r.get("category", ""),
+            r.get("rsvp_status", ""),
+            r.get("guest_count", ""),
+            r.get("dietary", ""),
+            r.get("special_notes", ""),
+        ])
+    return _excel_response(wb, "reservations.xlsx")
+
+
+@rt("/admin/export/songs")
+def get():
+    songs = get_song_requests()
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Song Requests"
+    ws.append(["Requested By", "Song", "Artist", "Dedication", "Submitted At"])
+    for s in songs:
+        submitted = s.get("submitted_at", "")
+        if hasattr(submitted, "strftime"):
+            submitted = submitted.strftime("%Y-%m-%d %H:%M")
+        ws.append([
+            s.get("name", ""),
+            s.get("song", ""),
+            s.get("artist", ""),
+            s.get("dedication", ""),
+            submitted or "",
+        ])
+    return _excel_response(wb, "song_requests.xlsx")
 
 
 # ---------------------------------------------------------------------------

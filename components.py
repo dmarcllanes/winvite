@@ -2323,21 +2323,21 @@ def DressCodeSection() -> FT:
     cards = [
         (
             "/static/images/dress_code/bd1.jpeg",
-            "The Groom",
+            "Men",
             "Suit & Tie",
             ["#1A2A4A", "#4A4A5A", "#C8C8D8"],
             "01",
         ),
         (
             "/static/images/dress_code/gd1.jpeg",
-            "The Bride",
+            "Women",
             "Wedding Gown",
             ["#F5ECD7", "#D4AF37", "#E8B4BC"],
             "02",
         ),
         (
             "/static/images/dress_code/gd2.jpeg",
-            "Our Guests",
+            "Women",
             "Cocktail Attire",
             ["#E8C8A0", "#A8DCC8", "#F2C4CE"],
             "03",
@@ -3620,8 +3620,29 @@ def AdminPage(guests: list[dict], reservations: list[dict] = None, songs: list[d
                         "shadow-[0_4px_24px_rgba(92,74,74,0.08)]"
                     ),
                 ),
-                # Guest table
-                GuestTable(guests),
+                # Guest table header with download button
+                Div(
+                    Div(
+                        Div(
+                            I(data_lucide="users", cls="w-4 h-4 text-[#D4AF37] mr-2"),
+                            H2("Guest List", cls="text-sm font-bold text-[#5C4A4A] uppercase tracking-wider"),
+                            cls="flex items-center",
+                        ),
+                        A(
+                            I(data_lucide="download", cls="w-3.5 h-3.5 mr-1.5"),
+                            "Export Excel",
+                            href="/admin/export/guests",
+                            cls=(
+                                "inline-flex items-center px-3.5 py-1.5 rounded-lg text-xs font-semibold "
+                                "text-white transition-all hover:opacity-90 active:scale-95 "
+                                "shadow-[0_2px_8px_rgba(212,175,55,0.35)]"
+                            ),
+                            style="background:linear-gradient(135deg,#D4AF37,#C4A028);",
+                        ),
+                        cls="flex items-center justify-between mb-4",
+                    ),
+                    GuestTable(guests),
+                ),
                 # Reservations
                 Div(
                     Div(
@@ -3630,10 +3651,21 @@ def AdminPage(guests: list[dict], reservations: list[dict] = None, songs: list[d
                             H2(f"Reservation Responses",
                                cls="text-base font-bold text-[#5C4A4A]"),
                             Span(str(len(reservations)),
-                                 cls="ml-auto text-xs font-bold text-white bg-[#D4AF37] px-2.5 py-0.5 rounded-full"),
-                            cls="flex items-center",
+                                 cls="ml-2 text-xs font-bold text-white bg-[#D4AF37] px-2.5 py-0.5 rounded-full"),
+                            cls="flex items-center flex-1",
                         ),
-                        cls="mb-5",
+                        A(
+                            I(data_lucide="download", cls="w-3.5 h-3.5 mr-1.5"),
+                            "Export Excel",
+                            href="/admin/export/reservations",
+                            cls=(
+                                "inline-flex items-center px-3.5 py-1.5 rounded-lg text-xs font-semibold "
+                                "text-white transition-all hover:opacity-90 active:scale-95 "
+                                "shadow-[0_2px_8px_rgba(212,175,55,0.35)]"
+                            ),
+                            style="background:linear-gradient(135deg,#D4AF37,#C4A028);",
+                        ),
+                        cls="flex items-center justify-between mb-5",
                     ),
                     ReservationsPanel(reservations),
                     cls="mt-10 bg-white rounded-2xl border border-[#EDE5DF] px-6 py-5 shadow-[0_4px_24px_rgba(92,74,74,0.08)]",
@@ -3646,10 +3678,21 @@ def AdminPage(guests: list[dict], reservations: list[dict] = None, songs: list[d
                             H2(f"Song Requests",
                                cls="text-base font-bold text-[#5C4A4A]"),
                             Span(str(len(songs)),
-                                 cls="ml-auto text-xs font-bold text-white bg-[#C4687A] px-2.5 py-0.5 rounded-full"),
-                            cls="flex items-center",
+                                 cls="ml-2 text-xs font-bold text-white bg-[#C4687A] px-2.5 py-0.5 rounded-full"),
+                            cls="flex items-center flex-1",
                         ),
-                        cls="mb-5",
+                        A(
+                            I(data_lucide="download", cls="w-3.5 h-3.5 mr-1.5"),
+                            "Export Excel",
+                            href="/admin/export/songs",
+                            cls=(
+                                "inline-flex items-center px-3.5 py-1.5 rounded-lg text-xs font-semibold "
+                                "text-white transition-all hover:opacity-90 active:scale-95 "
+                                "shadow-[0_2px_8px_rgba(212,175,55,0.35)]"
+                            ),
+                            style="background:linear-gradient(135deg,#C4687A,#A84060);",
+                        ),
+                        cls="flex items-center justify-between mb-5",
                     ),
                     SongRequestsPanel(songs),
                     cls="mt-6 mb-16 bg-white rounded-2xl border border-[#EDE5DF] px-6 py-5 shadow-[0_4px_24px_rgba(92,74,74,0.08)]",
@@ -3795,6 +3838,7 @@ def InvitationQuoteSection() -> FT:
 
 def PreviewInvitePage() -> FT:
     """Generic invite shown at / — no guest record needed."""
+    _preview_guest = {"slug": "", "name": "Guest", "category": "General", "custom_message": None, "plus_one": False, "rsvp_status": None}
     return (
         Title("Nikolai & Valentina · Wedding Invitation"),
         Main(
@@ -3807,11 +3851,11 @@ def PreviewInvitePage() -> FT:
             _section_separator(),
             Div(MemoriesSection(), cls="invite-section"),
             _section_separator(),
-            Div(DressCodeSection(), cls="invite-section"),
+            Div(PersonalMessage(_preview_guest), cls="invite-section"),
             _section_separator(),
-            Div(InvitationQuoteSection(), cls="invite-section"),
-
-            Div(ReservationSongSection({"slug": "", "name": "Guest"}), cls="invite-section"),
+            Div(AttendanceSection(_preview_guest), cls="invite-section"),
+            _section_separator(),
+            Div(DressCodeSection(), cls="invite-section"),
             Div(InviteFooter(), cls="invite-section"),
         ),
         _lightbox(),
