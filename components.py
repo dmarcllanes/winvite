@@ -208,10 +208,10 @@ CATEGORY_MESSAGES = {
         "No podríamos imaginar este día sin ti — ¡ven a celebrar con nosotros! 🎉"
     ),
     "Family": (
-        "With all our love and gratitude, we would be deeply honored "
-        "to have you celebrate this joyful milestone with us.",
-        "Con todo el amor de nuestros corazones, sería un honor inmenso "
-        "tenerte a nuestro lado en este momento tan especial de nuestras vidas."
+        "There are moments in life that are special on their own, "
+        "but when shared with those we love the most, they become unforgettable.",
+        "Hay momentos en la vida que son especiales por sí solos, "
+        "pero al compartirlos con quienes más queremos, se convierten en inolvidables."
     ),
     "VIP": (
         "It is with the greatest pleasure and heartfelt sincerity that "
@@ -2242,27 +2242,18 @@ def VenueSection() -> FT:
         ),
         Div(cls="venue-overlay"),
         Div(
+            Div(cls="w-16 h-px bg-white/40 mx-auto mb-6 scroll-reveal"),
             P(
-                "Join Us At",
-                cls="font-sans text-[10px] uppercase tracking-[0.5em] text-white/70 mb-3 scroll-reveal",
+                "El amor es la razón,",
+                cls="font-serif italic text-3xl md:text-4xl text-white mb-2 scroll-reveal sr-d1",
+                style="text-shadow:0 2px 24px rgba(0,0,0,0.45);",
             ),
-            Div(
-                "Finca Hotel Nuevo Futuro",
-                cls="font-serif text-4xl md:text-5xl text-white mb-3 scroll-reveal sr-d1",
-                style="text-shadow:0 2px 20px rgba(0,0,0,0.4);",
+            P(
+                "la boda es la celebración.",
+                cls="font-serif italic text-3xl md:text-4xl text-white mb-6 scroll-reveal sr-d2",
+                style="text-shadow:0 2px 24px rgba(0,0,0,0.45);",
             ),
-            Div(
-                Div(cls="w-16 h-px bg-white/50 mx-auto mb-3"),
-                P(
-                    "Location: Eje Cafetero (Coffee Triangle)",
-                    cls="font-sans text-sm text-white/85 tracking-wide scroll-reveal sr-d2",
-                ),
-                P(
-                    "Party: August 24, 2026",
-                    cls="font-sans text-sm text-white/85 tracking-wide scroll-reveal sr-d3 mt-1",
-                ),
-                Div(cls="w-16 h-px bg-white/50 mx-auto mt-3"),
-            ),
+            Div(cls="w-16 h-px bg-white/40 mx-auto scroll-reveal sr-d3"),
         ),
         cls="venue-section section-canvas invite-section",
     )
@@ -2272,7 +2263,6 @@ def MemoriesSection() -> FT:
     """Scattered polaroid wall — staggered drop-in entry, hover lift, heart burst."""
     imgs = [
         ("/static/images/memories/mem1.jpeg", "A Beautiful Beginning"),
-        ("/static/images/memories/mem2.jpeg", "Our Journey"),
         ("/static/images/memories/mem3.jpeg", "Together Always"),
         ("/static/images/memories/mem4.jpeg", "True Love"),
         ("/static/images/memories/mem5.jpeg", "Forever Yours"),
@@ -2282,12 +2272,11 @@ def MemoriesSection() -> FT:
     # Per-photo: (rotation, vertical-offset, stagger-delay)
     scatter = [
         ("-6deg", "8px",   "0s"),
-        ( "4deg", "-6px",  "0.15s"),
-        ("-2deg", "14px",  "0.3s"),
-        ( "7deg", "-4px",  "0.45s"),
-        ("-5deg", "10px",  "0.6s"),
-        ( "3deg", "-8px",  "0.75s"),
-        ("-4deg", "12px",  "0.9s"),
+        ("-2deg", "14px",  "0.15s"),
+        ( "7deg", "-4px",  "0.3s"),
+        ("-5deg", "10px",  "0.45s"),
+        ( "3deg", "-8px",  "0.6s"),
+        ("-4deg", "12px",  "0.75s"),
     ]
     cells = [
         Div(
@@ -2920,11 +2909,11 @@ def InvitePage(guest: dict) -> FT:
             _section_separator(),
             Div(MemoriesSection(), cls="invite-section"),
             _section_separator(),
-            Div(DressCodeSection(), cls="invite-section"),
-            _section_separator(),
             Div(PersonalMessage(guest), cls="invite-section"),
             _section_separator(),
             Div(AttendanceSection(guest), cls="invite-section"),
+            _section_separator(),
+            Div(DressCodeSection(), cls="invite-section"),
             Div(InviteFooter(), cls="invite-section"),
         ),
         _lightbox(),
